@@ -242,7 +242,7 @@ public class SBOMApplication implements IApplication {
 			}
 		}
 
-		return null;
+		return IApplication.EXIT_OK;
 	}
 
 	private void generateIndex(Path indexPath, URI renderer, List<SBOMGenerator.Result> sbomGeneratorResults)
