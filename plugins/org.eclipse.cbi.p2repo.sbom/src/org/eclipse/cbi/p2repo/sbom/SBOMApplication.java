@@ -66,6 +66,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.JarInputStream;
 import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -966,7 +967,7 @@ public class SBOMApplication implements IApplication {
 
 		private void setPurl(Component component, IInstallableUnit iu, IArtifactDescriptor artifactDescriptor,
 				byte[] bytes) {
-			var mavenDescriptor = MavenDescriptor.create(iu, artifactDescriptor);
+			var mavenDescriptor = MavenDescriptor.create(iu, artifactDescriptor, bytes);
 			if (mavenDescriptor != null && !mavenDescriptor.isSnapshot()) {
 				try {
 					// Document xmlContent =
@@ -1063,7 +1064,7 @@ public class SBOMApplication implements IApplication {
 				gatherLicencesFromJar(component, bytes, licenseToName);
 			}
 
-			var mavenDescriptor = MavenDescriptor.create(iu, artifactDescriptor);
+			var mavenDescriptor = MavenDescriptor.create(iu, artifactDescriptor, bytes);
 			if (mavenDescriptor != null && !mavenDescriptor.isSnapshot()) {
 				try {
 					var content = contentHandler.getContent(mavenDescriptor.toPOMURI());
@@ -1722,12 +1723,31 @@ public class SBOMApplication implements IApplication {
 	}
 
 	record MavenDescriptor(String groupId, String artifactId, String version, String classifier, String type) {
-		public static MavenDescriptor create(IInstallableUnit iu, IArtifactDescriptor artifactDescriptor) {
+		public static MavenDescriptor create(IInstallableUnit iu, IArtifactDescriptor artifactDescriptor,
+				byte[] bytes) {
 			var mavenDescriptor = create(artifactDescriptor.getProperties());
 			if (mavenDescriptor == null) {
 				mavenDescriptor = create(iu.getProperties());
 			}
 			if (mavenDescriptor == null && !isMetadata(artifactDescriptor)) {
+				try (var stream = new JarInputStream(new ByteArrayInputStream(bytes))) {
+					ZipEntry entry;
+					while ((entry = stream.getNextEntry()) != null) {
+						var name = entry.getName();
+						if (name.startsWith("META-INF/maven/") && name.endsWith("pom.properties")) {
+							var properties = new Properties();
+							properties.load(stream);
+							var artifactId = properties.getProperty("artifactId");
+							var groupId = properties.getProperty("groupId");
+							var version = properties.getProperty("version");
+							if (artifactId != null && groupId != null && version != null) {
+								return new MavenDescriptor(groupId, artifactId, version, null, "jar");
+							}
+						}
+					}
+				} catch (IOException e) {
+					// If anything goes wrong we can not do much more at this stage...
+				}
 				// System.err.println("###" + artifactDescriptor);
 			}
 			return mavenDescriptor;
