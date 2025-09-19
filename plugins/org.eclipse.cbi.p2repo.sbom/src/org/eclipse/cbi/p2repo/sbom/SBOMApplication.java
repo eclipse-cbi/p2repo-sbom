@@ -1756,8 +1756,8 @@ public class SBOMApplication implements IApplication {
 					// This is not the end we can try to query maven central
 					try {
 						var sha1Hash = computeHash("SHA-1", bytes);
-						var queryResult = contentHandler.getContent(
-								URI.create("https://search.maven.org/solrsearch/select?q=1:" + sha1Hash + "&wt=json"));
+						var queryResult = contentHandler.getContent(URI
+								.create("https://central.sonatype.com/solrsearch/select?q=1:" + sha1Hash + "&wt=json"));
 						var jsonObject = new JSONObject(queryResult);
 						if (jsonObject.has("response")) {
 							var response = jsonObject.getJSONObject("response");
