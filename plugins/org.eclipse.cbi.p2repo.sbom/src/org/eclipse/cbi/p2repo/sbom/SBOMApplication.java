@@ -56,6 +56,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
@@ -142,6 +143,7 @@ import org.eclipse.equinox.p2.repository.metadata.IMetadataRepositoryManager;
 import org.eclipse.equinox.spi.p2.publisher.PublisherHelper;
 import org.eclipse.osgi.util.ManifestElement;
 import org.json.JSONObject;
+import org.osgi.framework.Constants;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -447,6 +449,8 @@ public class SBOMApplication implements IApplication {
 
 		private List<ArtifactSourceRepository> artifactSourceRepositories;
 
+		private boolean processBundleClassPath;
+
 		private SBOMGenerator(List<String> args) throws Exception {
 			contentHandler = new ContentHandler(getArgument("-cache", args, null));
 			spdxIndex = new SPDXIndex(contentHandler);
@@ -489,6 +493,7 @@ public class SBOMApplication implements IApplication {
 			xml = getArgument("-xml", args) || !json && xmlOutput == null && jsonOutput == null;
 
 			byteCache = new ByteCache(getArgument("-byte-cache", args, null));
+			processBundleClassPath = getArgument("-process-bundle-classpath", args);
 		}
 
 		private List<Path> getOutputs() {
@@ -682,6 +687,7 @@ public class SBOMApplication implements IApplication {
 					var bytes = getArtifactContent(component, artifactDescriptor);
 					setPurl(component, iu, artifactDescriptor, bytes);
 					gatherLicences(component, iu, artifactDescriptor, bytes);
+					gatherInnerJars(component, bytes, artifactDescriptor); // TOOD
 					resolveDependencies(iusToDependencies.get(iu), iu);
 				}));
 			}
@@ -730,6 +736,51 @@ public class SBOMApplication implements IApplication {
 			generateJson(bom);
 
 			return Status.OK_STATUS;
+		}
+
+		private void gatherInnerJars(Component component, byte[] bytes, IArtifactDescriptor artifactDescriptor) {
+			if (!processBundleClassPath || isMetadata(artifactDescriptor)) {
+				return;
+			}
+			Map<String, byte[]> innerComponents = new HashMap<>();
+			try (var stream = new JarInputStream(new ByteArrayInputStream(bytes))) {
+				var manifest = stream.getManifest();
+				if (manifest == null) {
+					// no manifest no ways...
+					return;
+				}
+				var value = manifest.getMainAttributes().getValue(Constants.BUNDLE_CLASSPATH);
+				if (value == null || value.trim().equals(".") || value.equals("/")) {
+					// no inner jars...
+					return;
+				}
+				var match = Arrays.stream(value.split(",")).map(String::trim)
+						.filter(s -> !s.equals(".") && !s.equals("/")).toList();
+				ZipEntry entry;
+				while ((entry = stream.getNextEntry()) != null) {
+					var name = entry.getName();
+					for (String prefix : match) {
+						if (name.startsWith(prefix) && name.toLowerCase().endsWith(".jar")) {
+							innerComponents.put(name, stream.readAllBytes());
+						}
+					}
+				}
+			} catch (IOException e) {
+				// If anything goes wrong we can do much
+			}
+			for (Entry<String, byte[]> entry : innerComponents.entrySet()) {
+				var mavenDescriptor = MavenDescriptor.createFromBytes(entry.getValue(), contentHandler);
+				Component subComponent;
+				if (mavenDescriptor != null) {
+					subComponent = createAncestorComponent(mavenDescriptor);
+				} else {
+					subComponent = createInnerComponent(component, entry.getKey());
+				}
+				for (String algorithm : ALGORITHMS) {
+					subComponent.addHash(new Hash(algorithm, computeHash(algorithm, entry.getValue())));
+				}
+				component.addComponent(subComponent);
+			}
 		}
 
 		private void loadArtifactSource(URI location, URI referenced, Set<URI> loaded) {
@@ -934,6 +985,15 @@ public class SBOMApplication implements IApplication {
 			component.setName(mavenDescriptor.artifactId());
 			component.setGroup(mavenDescriptor.groupId());
 			component.setPurl(mavenDescriptor.mavenPURL());
+			return component;
+		}
+
+		private Component createInnerComponent(Component parent, String path) {
+			var component = new Component();
+			component.setType(Component.Type.LIBRARY);
+			component.setName(path);
+			component.setScope(Scope.REQUIRED);
+			component.setPurl(parent.getPurl() + "!" + path);
 			return component;
 		}
 
@@ -1877,46 +1937,51 @@ public class SBOMApplication implements IApplication {
 				mavenDescriptor = create(iu.getProperties());
 			}
 			if (mavenDescriptor == null && !isMetadata(artifactDescriptor)) {
-				try (var stream = new JarInputStream(new ByteArrayInputStream(bytes))) {
-					ZipEntry entry;
-					while ((entry = stream.getNextEntry()) != null) {
-						var name = entry.getName();
-						if (name.startsWith("META-INF/maven/") && name.endsWith("pom.properties")) {
-							var properties = new Properties();
-							properties.load(stream);
-							var artifactId = properties.getProperty("artifactId");
-							var groupId = properties.getProperty("groupId");
-							var version = properties.getProperty("version");
-							if (artifactId != null && groupId != null && version != null) {
-								return new MavenDescriptor(groupId, artifactId, version, null, "jar");
-							}
-						}
-					}
-				} catch (IOException e) {
-					// If anything goes wrong we can not do much more at this stage...
-				}
-				if (queryCentral) {
-					// This is not the end we can try to query maven central
-					try {
-						var sha1Hash = computeHash("SHA-1", bytes);
-						var queryResult = contentHandler.getContent(URI
-								.create("https://central.sonatype.com/solrsearch/select?q=1:" + sha1Hash + "&wt=json"));
-						var jsonObject = new JSONObject(queryResult);
-						if (jsonObject.has("response")) {
-							var response = jsonObject.getJSONObject("response");
-							if (response.has("numFound") && response.getInt("numFound") == 1) {
-								var coordinates = response.getJSONArray("docs").getJSONObject(0);
-								return new MavenDescriptor(coordinates.getString("g"), coordinates.getString("a"),
-										coordinates.getString("v"), null, coordinates.getString("p"));
-							}
-						}
-					} catch (Exception e) {
-						// If anything goes wrong here, we can not do much more ...
-					}
-				}
+				mavenDescriptor = createFromBytes(bytes, contentHandler);
 				// System.err.println("###" + artifactDescriptor);
 			}
 			return mavenDescriptor;
+		}
+
+		private static MavenDescriptor createFromBytes(byte[] bytes, ContentHandler contentHandler) {
+			try (var stream = new JarInputStream(new ByteArrayInputStream(bytes))) {
+				ZipEntry entry;
+				while ((entry = stream.getNextEntry()) != null) {
+					var name = entry.getName();
+					if (name.startsWith("META-INF/maven/") && name.endsWith("pom.properties")) {
+						var properties = new Properties();
+						properties.load(stream);
+						var artifactId = properties.getProperty("artifactId");
+						var groupId = properties.getProperty("groupId");
+						var version = properties.getProperty("version");
+						if (artifactId != null && groupId != null && version != null) {
+							return new MavenDescriptor(groupId, artifactId, version, null, "jar");
+						}
+					}
+				}
+			} catch (IOException e) {
+				// If anything goes wrong we can not do much more at this stage...
+			}
+			if (queryCentral) {
+				// This is not the end we can try to query maven central
+				try {
+					var sha1Hash = computeHash("SHA-1", bytes);
+					var queryResult = contentHandler.getContent(
+							URI.create("https://central.sonatype.com/solrsearch/select?q=1:" + sha1Hash + "&wt=json"));
+					var jsonObject = new JSONObject(queryResult);
+					if (jsonObject.has("response")) {
+						var response = jsonObject.getJSONObject("response");
+						if (response.has("numFound") && response.getInt("numFound") == 1) {
+							var coordinates = response.getJSONArray("docs").getJSONObject(0);
+							return new MavenDescriptor(coordinates.getString("g"), coordinates.getString("a"),
+									coordinates.getString("v"), null, coordinates.getString("p"));
+						}
+					}
+				} catch (Exception e) {
+					// If anything goes wrong here, we can not do much more ...
+				}
+			}
+			return null;
 		}
 
 		public static MavenDescriptor create(Map<String, String> properties) {
