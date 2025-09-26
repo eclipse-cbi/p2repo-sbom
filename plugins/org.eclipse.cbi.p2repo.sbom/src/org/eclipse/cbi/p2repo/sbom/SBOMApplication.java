@@ -1877,46 +1877,51 @@ public class SBOMApplication implements IApplication {
 				mavenDescriptor = create(iu.getProperties());
 			}
 			if (mavenDescriptor == null && !isMetadata(artifactDescriptor)) {
-				try (var stream = new JarInputStream(new ByteArrayInputStream(bytes))) {
-					ZipEntry entry;
-					while ((entry = stream.getNextEntry()) != null) {
-						var name = entry.getName();
-						if (name.startsWith("META-INF/maven/") && name.endsWith("pom.properties")) {
-							var properties = new Properties();
-							properties.load(stream);
-							var artifactId = properties.getProperty("artifactId");
-							var groupId = properties.getProperty("groupId");
-							var version = properties.getProperty("version");
-							if (artifactId != null && groupId != null && version != null) {
-								return new MavenDescriptor(groupId, artifactId, version, null, "jar");
-							}
-						}
-					}
-				} catch (IOException e) {
-					// If anything goes wrong we can not do much more at this stage...
-				}
-				if (queryCentral) {
-					// This is not the end we can try to query maven central
-					try {
-						var sha1Hash = computeHash("SHA-1", bytes);
-						var queryResult = contentHandler.getContent(URI
-								.create("https://central.sonatype.com/solrsearch/select?q=1:" + sha1Hash + "&wt=json"));
-						var jsonObject = new JSONObject(queryResult);
-						if (jsonObject.has("response")) {
-							var response = jsonObject.getJSONObject("response");
-							if (response.has("numFound") && response.getInt("numFound") == 1) {
-								var coordinates = response.getJSONArray("docs").getJSONObject(0);
-								return new MavenDescriptor(coordinates.getString("g"), coordinates.getString("a"),
-										coordinates.getString("v"), null, coordinates.getString("p"));
-							}
-						}
-					} catch (Exception e) {
-						// If anything goes wrong here, we can not do much more ...
-					}
-				}
+				mavenDescriptor = createFromBytes(bytes, contentHandler);
 				// System.err.println("###" + artifactDescriptor);
 			}
 			return mavenDescriptor;
+		}
+
+		private static MavenDescriptor createFromBytes(byte[] bytes, ContentHandler contentHandler) {
+			try (var stream = new JarInputStream(new ByteArrayInputStream(bytes))) {
+				ZipEntry entry;
+				while ((entry = stream.getNextEntry()) != null) {
+					var name = entry.getName();
+					if (name.startsWith("META-INF/maven/") && name.endsWith("pom.properties")) {
+						var properties = new Properties();
+						properties.load(stream);
+						var artifactId = properties.getProperty("artifactId");
+						var groupId = properties.getProperty("groupId");
+						var version = properties.getProperty("version");
+						if (artifactId != null && groupId != null && version != null) {
+							return new MavenDescriptor(groupId, artifactId, version, null, "jar");
+						}
+					}
+				}
+			} catch (IOException e) {
+				// If anything goes wrong we can not do much more at this stage...
+			}
+			if (queryCentral) {
+				// This is not the end we can try to query maven central
+				try {
+					var sha1Hash = computeHash("SHA-1", bytes);
+					var queryResult = contentHandler.getContent(
+							URI.create("https://central.sonatype.com/solrsearch/select?q=1:" + sha1Hash + "&wt=json"));
+					var jsonObject = new JSONObject(queryResult);
+					if (jsonObject.has("response")) {
+						var response = jsonObject.getJSONObject("response");
+						if (response.has("numFound") && response.getInt("numFound") == 1) {
+							var coordinates = response.getJSONArray("docs").getJSONObject(0);
+							return new MavenDescriptor(coordinates.getString("g"), coordinates.getString("a"),
+									coordinates.getString("v"), null, coordinates.getString("p"));
+						}
+					}
+				} catch (Exception e) {
+					// If anything goes wrong here, we can not do much more ...
+				}
+			}
+			return null;
 		}
 
 		public static MavenDescriptor create(Map<String, String> properties) {
