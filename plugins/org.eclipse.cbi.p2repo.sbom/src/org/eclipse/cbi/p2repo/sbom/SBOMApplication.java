@@ -172,6 +172,8 @@ public class SBOMApplication implements IApplication {
 		return result;
 	};
 
+	private static final URI OSV_URI = URI.create("https://api.osv.dev/v1/query");
+
 	private static final URI SBOM_RENDERER_URI = URI.create("https://download.eclipse.org/cbi/sbom");
 
 	private static final Pattern MAVEN_POM_PATTERN = Pattern.compile("META-INF/maven/[^/]+/[^/]+/pom.xml");
@@ -456,6 +458,8 @@ public class SBOMApplication implements IApplication {
 
 		private boolean processBundleClassPath;
 
+		private boolean fetchAdvisory;
+
 		private SBOMGenerator(List<String> args) throws Exception {
 			verbose = getArgument("-verbose", args);
 
@@ -465,6 +469,8 @@ public class SBOMApplication implements IApplication {
 			spdxIndex = new SPDXIndex(contentHandler);
 
 			queryCentral = getArgument("-central-search", args);
+
+			fetchAdvisory = getArgument("-advisory", args);
 
 			uriRedirections = URIUtil.parseRedirections(getArguments("-redirections", args, List.of()));
 
@@ -694,6 +700,7 @@ public class SBOMApplication implements IApplication {
 					setPurl(component, iu, artifactDescriptor, bytes);
 					gatherLicences(component, iu, artifactDescriptor, bytes);
 					gatherInnerJars(component, bytes, artifactDescriptor);
+					gatherAdvisory(component);
 					resolveDependencies(iusToDependencies.get(iu), iu);
 				}));
 			}
@@ -742,6 +749,17 @@ public class SBOMApplication implements IApplication {
 			generateJson(bom);
 
 			return Status.OK_STATUS;
+		}
+
+		private void gatherAdvisory(Component component) {
+			if (!fetchAdvisory) {
+				return;
+			}
+			try {
+				queryOSV(component, contentHandler);
+			} catch (IOException | InterruptedException e) {
+				System.err.println("Query OSV failed: " + e);
+			}
 		}
 
 		private void gatherInnerJars(Component component, byte[] bytes, IArtifactDescriptor artifactDescriptor) {
@@ -1703,6 +1721,90 @@ public class SBOMApplication implements IApplication {
 						System.err.println("##");
 					}
 				}
+			}
+		}
+
+		/**
+		 * Query OSV (Open Source Vulnerabilities) database for vulnerability
+		 * information and populate the component with any found vulnerabilities.
+		 *
+		 * @param component      the component to populate with vulnerability
+		 *                       information
+		 * @param contentHandler the content handler for querying
+		 * @throws InterruptedException
+		 * @throws IOException
+		 */
+		private void queryOSV(Component component, ContentHandler contentHandler)
+				throws IOException, InterruptedException {
+			var purl = component.getPurl();
+			if (purl == null) {
+				return;
+			}
+			String queryJson = null;
+			if (purl.startsWith("pkg:maven/")) {
+				var purlPath = purl.substring("pkg:maven/".length());
+				var atIndex = purlPath.indexOf('@');
+				if (atIndex > 0) {
+					var path = purlPath.substring(0, atIndex);
+					var version = purlPath.substring(atIndex + 1);
+					var queryIndex = version.indexOf('?');
+					if (queryIndex > 0) {
+						version = version.substring(0, queryIndex);
+					}
+					var slashIndex = path.lastIndexOf('/');
+					if (slashIndex > 0) {
+						var groupId = path.substring(0, slashIndex);
+						var artifactId = path.substring(slashIndex + 1);
+						queryJson = String.format(
+								"{\"package\":{\"name\":\"%s:%s\",\"ecosystem\":\"Maven\"},\"version\":\"%s\"}",
+								groupId, artifactId, version);
+					}
+				}
+			}
+			if (queryJson == null && component.getHashes() != null && !component.getHashes().isEmpty()) {
+				for (Hash hash : component.getHashes()) {
+					if ("SHA-256".equalsIgnoreCase(hash.getAlgorithm())) {
+						queryJson = String.format("{\"commit\":\"%s\"}", hash.getValue());
+						break;
+					}
+				}
+			}
+			if (queryJson == null) {
+				return;
+			}
+			var request = HttpRequest.newBuilder(OSV_URI).header("Content-Type", "application/json")
+					.POST(BodyPublishers.ofString(queryJson)).build();
+			var response = contentHandler.httpClient.send(request, BodyHandlers.ofString());
+			if (response.statusCode() == 200) {
+				var responseBody = response.body();
+				var jsonResponse = new JSONObject(responseBody);
+				if (jsonResponse.has("vulns")) {
+					var vulns = jsonResponse.getJSONArray("vulns");
+					for (var i = 0; i < vulns.length(); i++) {
+						var vulnObj = vulns.getJSONObject(i);
+						if (vulnObj.has("references")) {
+							var references = vulnObj.getJSONArray("references");
+							for (var j = 0; j < vulnObj.length(); j++) {
+								var ref = references.getJSONObject(j);
+								if (ref.has("url") && ref.has("type")) {
+									String type = ref.getString("type");
+									var reference = new ExternalReference();
+									reference.setUrl(ref.getString("url"));
+									if ("ADVISORY".equals(type)) {
+										reference.setType(org.cyclonedx.model.ExternalReference.Type.ADVISORIES);
+									} else if ("WEB".equals(type)) {
+										reference.setType(org.cyclonedx.model.ExternalReference.Type.WEBSITE);
+									} else {
+										reference.setType(org.cyclonedx.model.ExternalReference.Type.OTHER);
+									}
+									component.addExternalReference(reference);
+								}
+							}
+						}
+					}
+				}
+			} else {
+				System.err.println("## -> query OSV failed with code " + response.statusCode());
 			}
 		}
 
