@@ -54,4 +54,48 @@ public class SBOMTest {
 		System.out.println(jsonString);
 	}
 
+	@Test
+	public void testCPESupport() throws Exception {
+		// Test that CPE field is supported in CycloneDX Component model
+		var component = new Component();
+		component.setGroup("org.apache.commons");
+		component.setName("commons-logging");
+		component.setType(Component.Type.LIBRARY);
+		component.setVersion("1.2");
+		
+		// Set a CPE identifier
+		String cpe = "cpe:2.3:a:apache:commons_logging:1.2:*:*:*:*:*:*:*";
+		component.setCpe(cpe);
+		
+		var bom = new Bom();
+		bom.addComponent(component);
+
+		// Verify CPE is included in JSON output
+		var jsonGenerator = BomGeneratorFactory.createJson(Version.VERSION_16, bom);
+		var jsonString = jsonGenerator.toJsonString();
+		System.out.println("CPE Test JSON Output:");
+		System.out.println(jsonString);
+		
+		// Basic verification that CPE is present
+		if (!jsonString.contains("\"cpe\"")) {
+			throw new AssertionError("CPE field not found in JSON output");
+		}
+		if (!jsonString.contains(cpe)) {
+			throw new AssertionError("CPE value not found in JSON output");
+		}
+
+		// Verify CPE is included in XML output
+		var xmlGenerator = SBOMApplication.BOMUtil.createBomXMLGenerator(Version.VERSION_16, bom);
+		var xmlString = xmlGenerator.toXmlString();
+		System.out.println("CPE Test XML Output:");
+		System.out.println(xmlString);
+		
+		if (!xmlString.contains("<cpe>")) {
+			throw new AssertionError("CPE element not found in XML output");
+		}
+		if (!xmlString.contains(cpe)) {
+			throw new AssertionError("CPE value not found in XML output");
+		}
+	}
+
 }

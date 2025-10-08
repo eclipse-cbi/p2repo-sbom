@@ -481,6 +481,44 @@ There are **many** available sources of potential external reference information
 - The OSGi `MANIFEST.MF` `Bundle-DocURL`, `Bundle-SCM`, and `Eclipse-SourceReferences` headers.
 - Various elements, e.g., `connection`, in a POM.
 
+### CPE (Common Platform Enumeration)
+
+The generator provides [CPE](https://cyclonedx.org/docs/1.6/json/#components_items_cpe) (Common Platform Enumeration) identifiers
+for components derived from Maven artifacts.
+CPE is a standardized naming scheme for IT products and platforms,
+enabling better correlation with vulnerability databases such as the [National Vulnerability Database (NVD)](https://nvd.nist.gov/).
+
+CPE identifiers follow the [CPE 2.3 format](https://nvd.nist.gov/products/cpe):
+```
+cpe:2.3:a:vendor:product:version:*:*:*:*:*:*:*
+```
+
+For example, a component with Maven coordinates `org.apache.commons:commons-logging:1.2` would receive:
+```
+cpe:2.3:a:apache:commons_logging:1.2:*:*:*:*:*:*:*
+```
+
+The CPE identifier is constructed from the Maven coordinates:
+- **vendor**: Normalized from the Maven `groupId` (e.g., `org.apache.commons` becomes `apache`)
+- **product**: Normalized from the Maven `artifactId` (e.g., `commons-logging` becomes `commons_logging`)
+- **version**: The Maven version
+
+The generator applies common conventions for well-known vendors such as Apache, Google, Eclipse, and others.
+CPE identifiers are generated for both top-level components and nested JAR components when Maven coordinates are available.
+
+
+For example, a component with P2 id `org.eclipse.equinox.p2.core` and  version `2.13.100.v235464` would receive:
+```
+cpe:2.3:a:eclipse:equinox_p2_core:2.13.100:*:*:*:*:*:*:*
+```
+
+
+The CPE identifier is constructed from the P2 coordinates:
+- **vendor**: Second part of reverse domain notation of the artifact ID (e.g., `org.eclipse.equinox.p2.core` becomes `eclipse`)
+- **product**: Remaining part of reverse domain notation of the artifact ID (e.g., `org.eclipse.equinox.p2.core` becomes `equinox_p2_core`)
+- **version**: The Artifacts P2 version without the qualifier (e.g. `2.13.100.v235464` becomes `2.13.100`)
+
+
 ### Dependencies
 
 As mentioned previously,

@@ -456,6 +456,8 @@ public class SBOMApplication implements IApplication {
 
 		private boolean processBundleClassPath;
 
+		private boolean useCpe;
+
 		private SBOMGenerator(List<String> args) throws Exception {
 			verbose = getArgument("-verbose", args);
 
@@ -465,6 +467,7 @@ public class SBOMApplication implements IApplication {
 			spdxIndex = new SPDXIndex(contentHandler);
 
 			queryCentral = getArgument("-central-search", args);
+			useCpe = getArgument("-cpe", args);
 
 			uriRedirections = URIUtil.parseRedirections(getArguments("-redirections", args, List.of()));
 
@@ -1181,6 +1184,7 @@ public class SBOMApplication implements IApplication {
 			var purl = "pkg:p2/" + artifactKey.getId() + "@" + artifactKey.getVersion() + "?classifier="
 					+ artifactKey.getClassifier() + "&repository_url=" + encodedLocation;
 			component.setPurl(purl);
+			gatherCPEInformation(component, artifactDescriptor.getArtifactKey());
 		}
 
 		private boolean setMavenPurl(Component component, MavenDescriptor mavenDescriptor, byte[] bytes) {
@@ -1197,13 +1201,16 @@ public class SBOMApplication implements IApplication {
 				if (equivalent(bytes, mavenArtifactBytes, differences)) {
 					var purl = mavenDescriptor.mavenPURL();
 					component.setPurl(purl);
+					gatherCPEInformation(component, mavenDescriptor);
 					return true;
 				}
 
 				// Otherwise record this as a pedigree ancestor component.
 				var pedigree = new Pedigree();
 				var ancenstors = new Ancestors();
-				ancenstors.addComponent(createAncestorComponent(mavenDescriptor));
+				Component ancestorComponent = createAncestorComponent(mavenDescriptor);
+				gatherCPEInformation(ancestorComponent, mavenDescriptor);
+				ancenstors.addComponent(ancestorComponent);
 				pedigree.setAncestors(ancenstors);
 				pedigree.setNotes(String.join(", ", differences));
 				component.setPedigree(pedigree);
@@ -1704,6 +1711,131 @@ public class SBOMApplication implements IApplication {
 					}
 				}
 			}
+		}
+
+		/**
+		 * Gathers CPE (Common Platform Enumeration) information for a component based
+		 * on its Maven coordinates and updates the component with the CPE identifier.
+		 * <p>
+		 * CPE identifiers are standardized names for IT products used in vulnerability
+		 * databases like the National Vulnerability Database (NVD). This method
+		 * constructs a CPE 2.3 format identifier from Maven coordinates.
+		 * </p>
+		 *
+		 * @param component       The component to update with CPE information
+		 * @param mavenDescriptor The Maven coordinates (groupId, artifactId, version)
+		 */
+		private void gatherCPEInformation(Component component, MavenDescriptor mavenDescriptor) {
+			if (useCpe) {
+				String vendor = normalizeVendorName(mavenDescriptor.groupId());
+				String product = mavenDescriptor.artifactId();
+				String version = mavenDescriptor.version();
+
+				var cpe = String.format("cpe:2.3:a:%s:%s:%s:*:*:*:*:*:*:*", normalizeCPEComponent(vendor),
+						normalizeCPEComponent(product), normalizeCPEComponent(version));
+				component.setCpe(cpe);
+			}
+		}
+
+		/**
+		 * Gather CPE from artifact key
+		 *
+		 * @param component
+		 * @param artifactKey
+		 */
+		private void gatherCPEInformation(Component component, IArtifactKey artifactKey) {
+			if (useCpe) {
+				// its a bit unclear how to construct a "real" CPE component e.g. there are
+				// components named "eclipse_ide" some seem to have a project name e.g.
+				// "buildship" so then more reference to a EPP / customized product.
+				// For the sake of consistency we use the following assumptions:
+				// - Bundles follow a reverse domain name scheme
+				// - the additional part identifies the product
+				// - the version is the version of the artifact
+				// we have for example the following CVEs attached to platform:
+				// - https://nvd.nist.gov/vuln/detail/CVE-2021-41037
+				// - https://nvd.nist.gov/vuln/detail/CVE-2021-41033
+				// that would roughly match, to improve this EF needs to get in contact and
+				// might negotiate a better way of assigning CPEs see
+				// https://nvd.nist.gov/products/cpe so each eclipse project should probabbly be
+				// assign a name automatically and Eclipse should store records about the
+				// assigned name per project.
+				var id = artifactKey.getId();
+				var parts = id.split("\\.", 3);
+				if (parts.length == 3) {
+					var version = artifactKey.getVersion();
+					String v = version.toString();
+					try {
+						var osgi = org.osgi.framework.Version.parseVersion(v);
+						v = osgi.getMajor() + "." + osgi.getMinor() + "." + osgi.getMicro();
+					} catch (RuntimeException e) {
+						// continue using the string
+					}
+					var cpe = String.format("cpe:2.3:a:%s:%s:%s:*:*:*:*:*:*:*", parts[1],
+							normalizeCPEComponent(parts[2]).replace('.', '_'), v);
+					component.setCpe(cpe);
+				}
+			}
+		}
+
+		/**
+		 * Normalizes a Maven groupId to a vendor name for CPE.
+		 * <p>
+		 * Applies common conventions for well-known vendors:
+		 * <ul>
+		 * <li>org.apache.* -> apache</li>
+		 * <li>com.google.* -> google</li>
+		 * <li>org.eclipse.* -> eclipse</li>
+		 * <li>com.fasterxml.* -> fasterxml</li>
+		 * <li>org.springframework.* -> springframework</li>
+		 * </ul>
+		 * For other groupIds, returns the last component.
+		 * </p>
+		 *
+		 * @param groupId The Maven groupId
+		 * @return Normalized vendor name
+		 */
+		private String normalizeVendorName(String groupId) {
+			if (groupId.startsWith("org.apache.")) {
+				return "apache";
+			}
+			if (groupId.startsWith("com.google.")) {
+				return "google";
+			}
+			if (groupId.startsWith("org.eclipse.")) {
+				return "eclipse";
+			}
+			if (groupId.startsWith("com.fasterxml.")) {
+				return "fasterxml";
+			}
+			if (groupId.startsWith("org.springframework.")) {
+				return "springframework";
+			}
+			if (groupId.startsWith("io.netty.")) {
+				return "netty";
+			}
+			if (groupId.startsWith("org.slf4j.")) {
+				return "slf4j";
+			}
+
+			// Return last component by default
+			var parts = groupId.split("\\.");
+			return parts[parts.length - 1];
+		}
+
+		/**
+		 * Normalizes a CPE component according to CPE 2.3 naming rules.
+		 * <p>
+		 * CPE components should be lowercase and use underscores instead of spaces or
+		 * hyphens for better standardization.
+		 * </p>
+		 *
+		 * @param component The component string to normalize
+		 * @return Normalized CPE component
+		 */
+		private String normalizeCPEComponent(String component) {
+			// CPE components use lowercase and replace certain characters
+			return component.toLowerCase().replace(" ", "_").replace("-", "_");
 		}
 
 		private boolean isExcluded(IRequirement requirement) {
