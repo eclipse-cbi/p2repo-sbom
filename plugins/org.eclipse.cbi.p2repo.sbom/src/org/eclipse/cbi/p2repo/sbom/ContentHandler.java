@@ -283,4 +283,28 @@ public class ContentHandler {
 			throw new IOException(uri + " : " + e.getMessage(), e);
 		}
 	}
+
+	/**
+	 * Save content to cache. If content is null, saves a 404 marker.
+	 * 
+	 * @param uri the URI to cache
+	 * @param content the content to save, or null for 404
+	 */
+	public void saveToCache(URI uri, String content) {
+		try {
+			if (content == null) {
+				// Save 404 marker
+				Path cachePath404 = getCachePath404(uri);
+				Files.createDirectories(cachePath404.getParent());
+				Files.writeString(cachePath404, "");
+			} else {
+				// Save actual content
+				Path cachePath = getCachePath(uri);
+				Files.createDirectories(cachePath.getParent());
+				Files.writeString(cachePath, content);
+			}
+		} catch (IOException e) {
+			System.err.println("Failed to save to cache: " + uri + " - " + e.getMessage());
+		}
+	}
 }

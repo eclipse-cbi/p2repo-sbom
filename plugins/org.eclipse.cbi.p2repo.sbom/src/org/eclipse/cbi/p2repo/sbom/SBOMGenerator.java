@@ -251,7 +251,7 @@ public class SBOMGenerator extends AbstractApplication {
 
 	private final boolean fetchClearlyDefined;
 
-	private final ClearlyDefinedApi clearlyDefinedApi;
+	private ClearlyDefinedApi clearlyDefinedApi;
 
 	private final Bom bom;
 
@@ -278,8 +278,6 @@ public class SBOMGenerator extends AbstractApplication {
 		fetchAdvisory = getArgument("-advisory", args);
 
 		fetchClearlyDefined = getArgument("-clearly-defined", args);
-		
-		clearlyDefinedApi = fetchClearlyDefined ? new ClearlyDefinedApi(contentHandler, verbose) : null;
 
 		uriRedirections = parseRedirections(getArguments("-redirections", args, List.of()));
 
@@ -506,6 +504,12 @@ public class SBOMGenerator extends AbstractApplication {
 
 		// Gather details from the actual artifacts in parallel.
 		var executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 4);
+		
+		// Initialize ClearlyDefinedApi with the shared executor if needed
+		if (fetchClearlyDefined) {
+			clearlyDefinedApi = new ClearlyDefinedApi(contentHandler, executor, verbose);
+		}
+		
 		var futures = new LinkedHashSet<Future<?>>();
 		for (var entry : artifactIUs.entrySet()) {
 			var iu = entry.getValue();
@@ -594,11 +598,6 @@ public class SBOMGenerator extends AbstractApplication {
 		progress.worked(1);
 		generateJson(bom);
 		progress.worked(1);
-		
-		// Cleanup ClearlyDefinedApi
-		if (clearlyDefinedApi != null) {
-			clearlyDefinedApi.shutdown();
-		}
 	}
 
 	@Override
