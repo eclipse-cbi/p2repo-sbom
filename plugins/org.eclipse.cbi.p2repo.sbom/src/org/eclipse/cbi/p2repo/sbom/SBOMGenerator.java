@@ -251,6 +251,8 @@ public class SBOMGenerator extends AbstractApplication {
 
 	private final boolean fetchClearlyDefined;
 
+	private final ClearlyDefinedApi clearlyDefinedApi;
+
 	private final Bom bom;
 
 	private IMetadataRepositoryManager metadataRepositoryManager;
@@ -276,6 +278,8 @@ public class SBOMGenerator extends AbstractApplication {
 		fetchAdvisory = getArgument("-advisory", args);
 
 		fetchClearlyDefined = getArgument("-clearly-defined", args);
+		
+		clearlyDefinedApi = fetchClearlyDefined ? new ClearlyDefinedApi(contentHandler, verbose) : null;
 
 		uriRedirections = parseRedirections(getArguments("-redirections", args, List.of()));
 
@@ -563,6 +567,17 @@ public class SBOMGenerator extends AbstractApplication {
 		}
 
 		progress.subTask("");
+		
+		// Wait for ClearlyDefined requests to complete
+		if (clearlyDefinedApi != null) {
+			try {
+				clearlyDefinedApi.waitForCompletion();
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				throw new ProvisionException("Interrupted while waiting for ClearlyDefined", e);
+			}
+		}
+		
 		progress.done();
 
 		// Transfer gathered details from binary IU to corresponding source IU.
@@ -579,6 +594,11 @@ public class SBOMGenerator extends AbstractApplication {
 		progress.worked(1);
 		generateJson(bom);
 		progress.worked(1);
+		
+		// Cleanup ClearlyDefinedApi
+		if (clearlyDefinedApi != null) {
+			clearlyDefinedApi.shutdown();
+		}
 	}
 
 	@Override
@@ -1208,23 +1228,8 @@ public class SBOMGenerator extends AbstractApplication {
 		}
 		if (!"sources".equals(mavenDescriptor.classifier())) {
 			var clearlyDefinedURI = mavenDescriptor.toClearlyDefinedURI();
-			try {
-				var clearlyDefinedContent = contentHandler.getContent(clearlyDefinedURI);
-				try {
-					var clearlyDefinedJSON = new JSONObject(clearlyDefinedContent);
-					var clearlyDefinedLicensed = clearlyDefinedJSON.getJSONObject("licensed");
-					if (clearlyDefinedLicensed.has("declared")) {
-						var clearlyDefinedDeclaredLicense = clearlyDefinedLicensed.get("declared");
-						if (clearlyDefinedDeclaredLicense instanceof String value) {
-							component.addProperty(createProperty("clearly-defined", value));
-						}
-					}
-				} catch (RuntimeException ex) {
-					System.err.println("Bad ClearlyDefined content: " + clearlyDefinedURI);
-				}
-			} catch (IOException ex) {
-				throw new RuntimeException(ex);
-			}
+			// Submit async request to ClearlyDefinedApi
+			clearlyDefinedApi.submitRequest(component, clearlyDefinedURI);
 		}
 	}
 

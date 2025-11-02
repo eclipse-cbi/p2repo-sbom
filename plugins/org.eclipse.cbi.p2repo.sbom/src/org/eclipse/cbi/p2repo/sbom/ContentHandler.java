@@ -143,11 +143,11 @@ public class ContentHandler {
 		return response.body();
 	}
 
-	protected Path getCachePath404(URI uri) {
+	public Path getCachePath404(URI uri) {
 		return getCachePath(uri, "404/");
 	}
 
-	protected Path getCachePath(URI uri) {
+	public Path getCachePath(URI uri) {
 		return getCachePath(uri, "");
 	}
 
