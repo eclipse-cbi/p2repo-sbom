@@ -86,6 +86,7 @@ import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.equinox.internal.p2.artifact.repository.simple.SimpleArtifactRepository;
 import org.eclipse.equinox.internal.p2.core.DefaultAgentProvider;
 import org.eclipse.equinox.internal.p2.director.PermissiveSlicer;
+import org.eclipse.equinox.internal.p2.director.QueryableArray;
 import org.eclipse.equinox.internal.p2.metadata.IRequiredCapability;
 import org.eclipse.equinox.internal.p2.metadata.InstallableUnit;
 import org.eclipse.equinox.internal.p2.metadata.repository.io.MetadataWriter;
@@ -1114,7 +1115,9 @@ public class SBOMGenerator extends AbstractApplication {
 			return rootIUInclusions.matcher(id).matches()
 					|| rootIUInclusions.matcher(id + ":" + iu.getVersion()).matches();
 		}).collect(Collectors.toSet());
-		var slice = new PermissiveSlicer(allIUs, Map.of(), true, true, true, false, false) {
+
+		var slice = new PermissiveSlicer(new QueryableArray(allIUs.query(QueryUtil.ALL_UNITS, null).toSet()), Map.of(),
+				true, true, true, false, false) {
 			@Override
 			protected boolean isApplicable(IRequirement requirement) {
 				return !isExcluded(requirement);
