@@ -1,7 +1,7 @@
 # Command Line SBOM Generation
 
-The CBI p2 SBOM Generator supports command line invocation via the CBI p2 SBOM Application.
-Most command line options passed to the application are forwarded directly to the generator.
+The CBI p2 SBOM Generator supports command-line invocation via the CBI p2 SBOM Application.
+Most command-line options passed to the application are forwarded directly to the generator.
 The generator options are described first, followed by a description of the application options.
 
 ## Repository Inputs
@@ -28,7 +28,7 @@ Specify one or more artifact-only p2 repository locations.
 The generator allows specifying an [installation](overview.md#installations) location as input.
 An installation is logically both a metadata repository (the installation profile) and an artifact repository.
 The generator reads the installation's configuration as well as the p2 profile to determine the relevant metadata and artifact repositories of the installation.
-I.e., the generator effectively converts the installation argument to equivalent p2 repository inputs.
+That is, the generator effectively converts the installation argument to equivalent p2 repository inputs.
 
 ### `-installation` `<path-or-uri>`
 
@@ -44,14 +44,14 @@ Nevertheless, the SBOM will reference the original location of the installation.
 
 ## Dependency Inputs
 
-It's typically the case that a p2 repository is not transitively complete with respect to the requirements of its units,
-i.e., the repository's units have requirements that are satisfied by units from other repositories.
+It is typically the case that a p2 repository is not transitively complete with respect to the requirements of its units,
+that is, the repository's units have requirements that are satisfied by units from other repositories.
 Because one of the more valuable aspects of an SBOM is dependency tracking,
 the generator supports specifying so-called _dependency repositories_.
 These can be specified in a way analogous to specifying repository inputs.
 
 The dependency repositories are loaded just like the regular input repositories,
-but a component corresponding to a unit from a dependency repository is included in the SBOM
+however, a component corresponding to a unit from a dependency repository is included in the SBOM
 **if and only if** there exists a unit from an input repository that has a requirement that is satisfied **only** by a unit from a dependency repository.
 As such, transitive dependencies of a component from the dependency repository are **not** automatically included in the SBOM.
 
@@ -69,9 +69,9 @@ Specify one or more artifact-only p2 repository locations.
 
 ### `-use-repository-references-as-dependencies`
 
-Specify to use repository references as dependency repositories.
+Specify that repository references should be used as dependency repositories.
 
-It's often the case that a p2 metadata repository specifies a reference to one or more additional repositories that provide units that satisfy the requirements of the repository's units.
+It is often the case that a p2 metadata repository specifies a reference to one or more additional repositories that provide units that satisfy the requirements of the repository's units.
 With this option, those repositories are automatically processed as dependency repositories as if the above arguments were explicitly specified.
 
 
@@ -124,6 +124,7 @@ For example, specifying the following folder mapping will redirect all Maven Cen
 https://repo.maven.apache.org/maven2/->https://repo.eclipse.org/content/repositories/maven_central/
 ```
 
+
 ## Network
 
 There are a number of options that support tuning the behavior of network access.
@@ -132,7 +133,7 @@ There are a number of options that support tuning the behavior of network access
 
 Specify the number of retries for failed retriable network operations.
 
-Default taken from system property `org.eclipse.cbi.p2repo.sbom.retry` or `5`.
+Default taken from the system property `org.eclipse.cbi.p2repo.sbom.retry` or `5`.
 
 ### `-retry-delay` `<seconds>`
 
@@ -152,8 +153,7 @@ There are a number of options that control the analysis behavior of the generato
 
 ### `-verbose`
 
-Specify more verbose logging to stdout/stderr, e.g.,
-prints more diagnostics such as mapping problems, rejected license URLs, and so on.
+Specify more verbose logging to stdout/stderr; for example, print more diagnostics such as mapping problems, rejected license URLs, and so on.
 
 ### `-process-bundle-classpath`
 
@@ -168,16 +168,16 @@ This helps produce canonical Maven PURLs when applicable.
 ### `-git-issues`
 
 Specify to detect the issues page of GitHub repositories recognized from `SCM` details in POMs and from manifest entries `Bundle-SCM` or `Eclipse-SourceReferences`
-and to generate issue-tracker external references when such a corresponding GitHub issues page exists.
+and to generate issue-tracker external references when a corresponding GitHub issues page exists.
 
 ### `-advisory`
 
 Specify to query the [OSV API](https://google.github.io/osv.dev/post-v1-query/) (Open Source Vulnerabilities) for vulnerabilities for components that have Maven PURLs
-and add any advisory/external references found by such queries.
+and add any advisory or external references found by such queries.
 
 ### `-clearly-defined`
 
-Specify to query [ClearlyDefined](https://clearlydefined.io/) metadata for Maven coordinates to add declared license info as a component property.
+Specify to query [ClearlyDefined](https://clearlydefined.io/) metadata for Maven coordinates to add declared license information as a component property.
 The server is notoriously prone to network failure.
 
 ### `-dependency-track`
@@ -189,7 +189,7 @@ A `dependency-track` server currently flattens nested components and loses pedig
 
 - [DependencyTrack#4119](https://github.com/DependencyTrack/dependency-track/issues/4119)
 
-As a result, the useful content generated for [pedigree](overview.md#pedigree) and [nested jars](overview.md#nested-jars) is actually not useful for `dependency-track`.
+As a result, the useful content generated for [pedigree](overview.md#pedigree) and [nested jars](overview.md#nested-jars) is not useful for `dependency-track`.
 
 With this option,
 nested-jar components and pedigree components are flattened by the generator
@@ -199,7 +199,7 @@ and a dependency is added from the container component to the flattened componen
 ### `-minimize-root-dependencies`
 
 Specify to minimize the dependencies of the SBOM's metadata component to be the roots of the dependency graph induced by all of the SBOM's components.
-By default the SBOM's metadata component depends directly on directly on all components of the SBOM.
+By default, the SBOM's metadata component depends directly on all components of the SBOM.
 
 
 ## Component Filters
@@ -222,7 +222,7 @@ Two common short names are recognized and mapped appropriately:
 
 ### `-component-exclusions` `<pattern>`
 
-Specify regular-expression pattern to match names of components to be excluded from the SBOM.
+Specify a regular-expression pattern to match names of components to be excluded from the SBOM.
 For example, specifying `.*\.source` can be used to exclude all source bundles.
 
 ### `-expected-missing-artifact-iu-patterns` `<pattern>`+
@@ -231,7 +231,7 @@ Specify one or more regular expressions that will be applied to the `<component-
 to suppress the generation of a `missing-artifact` property on that component.
 
 There are some exceptional situations where [p2 metadata customizations](https://eclipse.dev/eclipse/markdown/?file=eclipse-equinox/p2/master/docs/Customizing_Metadata.md)
-produce metadata that normally would suggest a corresponding artifact must exist but in fact the unit is just purely metadata.
+produce metadata that would normally suggest a corresponding artifact must exist, but in fact the unit is purely metadata.
 For example, the current [SimRel](https://eclipse.dev/simel) repository contains _fake_ source features and can use the following to suppress the `missing-artifact` property.
 ```
 -expected-missing-artifact-iu-patterns
@@ -250,9 +250,8 @@ In other words, only a slice of all available components will be included in the
 
 When mapping [requirements onto dependencies](overview.md#dependencies),
 missing (unresolved) requirements are marked with an `unsatisfied-requirement` property.
-This is generally an undesirable result because it may reflect important missing dependency information.
-That being said, a requirement can specify a filter and is generally only applicable if and only if the filter matches.
-As such, there are common cases where requirements are expected to be missing.
+This is generally undesirable because it may reflect important missing dependency information.
+However, a requirement can specify a filter and is applicable only if the filter matches.
 The generator allows specifying options for handling missing requirements gracefully.
 
 ### `-requirement-inclusions` `<context-spec>`+
@@ -263,7 +262,7 @@ i.e., a comma-separated list of key-value pairs.
 If any inclusive units are specified,
 a missing requirement will be considered relevant only if at least one of the inclusive context units matches the filter.
 
-When a product is generated for just a small subset of the available os/win/arch combinations
+When a product is generated for just a small subset of the available os/win/arch combinations,
 it is generally more concise to specify the supported ones than to list all the unsupported ones.
 
 ### `-requirement-exclusions` `<context-spec>`+
@@ -273,13 +272,13 @@ The format is the same as for `requirement-inclusions`.
 If any exclusive units are specified,
 a missing requirement will be considered irrelevant if any one of the exclusive context units matches the filter.
 
-When a product is generated for most of the available os/win/arch combinations
+When a product is generated for most of the available os/win/arch combinations,
 it is generally more concise to specify the unsupported ones than to list all the supported ones.
 
 ## Output
 
 Given the purpose of the SBOM generator is to generate an SBOM,
-a command line invocation will generally specify the type of SBOM and the location of the SBOM.
+a command-line invocation will generally specify the type of SBOM and the location of the SBOM.
 
 ### `-xml`
 
@@ -327,7 +326,7 @@ The SBOM generator will be invoked separately for each slice.
 
 ### `-xml-outputs` `<folder>`
 
-Specify the folder in which to generate a XML SBOM for each installation.
+Specify the folder in which to generate an XML SBOM for each installation.
 
 ### `-json-outputs` `<folder>`
 
@@ -341,13 +340,13 @@ For each matching installation `<installation-path>` in the `-installations` fol
 - The effective arguments for the p2 SBOM generator invocation are a copy of the application arguments with the application-specific arguments removed.
 - The invocation specifies `-installation` `<installation-path>` to generate an SBOM for that installation.
 - If `-xml-outputs` `<folder>` is specified, the invocation specifies `-xml-output` `<folder>/<installation-base-name>-sbom.xml`.
-- If `-json-outputs` `folder>` is specified, the invocation specifies `-json-output` `<folder>/<installation-base-name>-sbom.json`.
+- If `-json-outputs` `<folder>` is specified, the invocation specifies `-json-output` `<folder>/<installation-base-name>-sbom.json`.
 
 #### Multiple Slices
 
 For each `<slice-spec>` of the form `<name>=<pattern>` in the `-slices`, the following processing is invoked:
 - The effective arguments for the p2 SBOM generator invocation are a copy of the application arguments with the application-specific arguments removed.
-- The invocation specifies `-slice` `<pattern>` to generate an SBOM for that slice; note that `|` can be use to specify multiple patterns as single pattern.
+- The invocation specifies `-slice` `<pattern>` to generate an SBOM for that slice; note that `|` can be used to specify multiple patterns as a single pattern.
 - If `-xml-outputs` `<folder>` is specified, the invocation specifies `-xml-output` `<folder>/<name>-sbom.xml`.
 - If `-json-outputs` `<folder>` is specified, the invocation specifies `-json-output` `<folder>/<name>-sbom.json`.
 
@@ -355,7 +354,7 @@ For each `<slice-spec>` of the form `<name>=<pattern>` in the `-slices`, the fol
 
 If neither `-installations` nor `-slices` are specified,
 the p2 SBOM generator is invoked with a copy of the application arguments.
-In this case the caller is expected to have provided `-installation`, `-inputs`, or other input arguments,
+In this case, the caller is expected to have provided `-installation`, `-inputs`, or other input arguments,
 as well as specific [output arguments](#output).
 
 
@@ -363,12 +362,12 @@ as well as specific [output arguments](#output).
 
 #### `-index` `<file>`
 
-Specify to generate to the specified file an HTML index file detailing the generated SBOMs.
+Specify generating an HTML index file at the specified file path that details the generated SBOMs.
 
 #### `-renderer` `<uri>`
 
 Specify the renderer base URL to be used for producing renderer links in the index.
-Defaults to to [https://download.eclipse.org/cbi/sbom](https://download.eclipse.org/cbi/sbom).
+Defaults to [https://download.eclipse.org/cbi/sbom](https://download.eclipse.org/cbi/sbom).
 Due to cross-origin scripting restrictions, the referenced SBOM URI and the renderer URI must be hosted by the same origin.
 
 
@@ -382,7 +381,7 @@ This mapping is parsed and used to possibly open the generated index in a browse
 #### Index and Rendering Example
 
 In the [CBI p2 SBOM Development IDE](../CONTRIBUTING.md)
-we use the following in launch configurations in order to open the renderer via `localhost` in a browser
+we use the following in launch configurations in order to open the renderer via `localhost` in a browser:
 
 ```
 -index

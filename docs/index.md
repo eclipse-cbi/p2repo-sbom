@@ -1,11 +1,11 @@
 # CBI p2 SBOM Generator
 
-The CBI p2 SBOM Generator supports generating a high-quality Software Bill of Materials from a p2 repository or an Eclipse Installation.
+The CBI p2 SBOM Generator supports generating a high-quality Software Bill of Materials from a p2 repository or an Eclipse installation.
 The generator provides the following:
-- A headless product to support a command line interface.
-- IDE integration to drive the generation process from within an IDE.
+- A headless product that supports a command-line interface.
+- IDE integration to drive the generation process from within the IDE.
 
-The project also supports a [web-based render](https://download.eclipse.org/cbi/sbom/) to provide a user-friendly overview of an SBOM's overwhelmingly-large volume of textual content.
+The project also supports a [web-based renderer](https://download.eclipse.org/cbi/sbom/) to provide a user-friendly overview of an SBOM's overwhelmingly large volume of textual content.
 
 ## Conceptual Overview
 
@@ -13,7 +13,7 @@ It is highly recommended to read the [conceptual overview](overview.md) for a de
 
 ## Command Line Interface
 
-Please read the [command line interface ](cli-guide.md) guide for details about the supported command line options.
+Please read the [command-line interface](cli-guide.md) guide for details about the supported command line options.
 
 ## Maven/Jenkins Integration
 
@@ -25,7 +25,7 @@ Please read the [IDE guide](ide-guide.md) for details about the IDE integration.
 
 ## Web-based Renderer
 
-Please read the [renderer guide](renderer-guide.md) for details about the web-based render.
+Please read the [renderer guide](renderer-guide.md) for details about the web-based renderer.
 
 ## Setting Up a Development Environment
 

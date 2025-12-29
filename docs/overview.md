@@ -15,7 +15,7 @@ for managing p2 repositories that provide access to the application units,
 e.g., the application bundles,
 for provisioning application installations from those units.
 
-A Software Bill of Material, an SBOM,
+A Software Bill of Materials (SBOM),
 is a formal inventory of a software application's components,
 including metadata about those components as well as dependencies between those components.
 To produce an SBOM for an Eclipse application,
@@ -23,7 +23,7 @@ the building blocks of the application must be mapped onto a formal SBOM model.
 The CBI p2 SBOM generator uses 
 [CycloneDX](https://cyclonedx.org/)
 as the formal representation,
-currently specification version
+currently the specification version
 [1.6](https://cyclonedx.org/specification/overview/).
 
 OSGi provides rich metadata for each bundle,
@@ -56,7 +56,7 @@ as supported by the Eclipse Plug-in Development Environment,
   is a special type of bundle that extends a so-called host bundle, typically with a platform-native implementation.
 - A [feature](https://help.eclipse.org/latest/index.jsp?topic=%2Forg.eclipse.pde.doc.user%2Fconcepts%2Ffeature.htm&cp%3D4_1_1)
   is a collection of dependencies on plug-ins, fragments, and other features.
-  It is intended as a user-facing unit that provides support for some high-level functionality that the user may choose to install in an application
+  It is intended as a user-facing unit that provides support for some high-level functionality that the user may choose to install in an application.
 - A [product](https://help.eclipse.org/latest/index.jsp?topic=%2Forg.eclipse.pde.doc.user%2Fconcepts%2Fproduct.htm&cp%3D4_1_4)
   is a description of a complete stand-alone Eclipse application,
   specifying the bundles, fragments, and features to be installed, program arguments, JVM arguments, branding details, and so on.
@@ -101,7 +101,7 @@ are defined by the following:
 - An artifact repository that specifies the location of each corresponding artifact of each installable unit in that installation.
 
 In this sense,
-an installation is logically equivalent to a pair p2 repositories.
+an installation is logically equivalent to a pair of p2 repositories.
 The CBI p2 SBOM generator exploits this equivalence,
 making it possible to generate an SBOM for p2 repositories and for Eclipse installations with the same underlying implementation logic.
 
@@ -115,7 +115,7 @@ The components of a generated SBOM are mapped as follows:
 ### Bundle Mapping
 
 A bundle unit is a component of type [library](https://cyclonedx.org/docs/1.6/json/#components_items_type).
-It corresponds to both an installable unit as well as that unit's associated artifact.
+It corresponds to both an installable unit and that unit's associated artifact.
 ```xml
 <unit id='org.example.abc' version='1.1.0.v20250601-0000' generation='2'>
   <update id='org.example.abc' range='[0.0.0,1.1.0.v20250601-0000)' severity='0'/>
@@ -149,7 +149,7 @@ i.e., analogous to the mapping of the artifact in the artifact repository.
 A feature unit is a component of type [library](https://cyclonedx.org/docs/1.6/json/#components_items_type).
 It corresponds to a pair of installable units, `*.feature.group` and `*.feature.jar`,
 where `*` is the base ID,
-as well the units' associated artifact ID.
+as well as the units' associated artifact ID.
 ```xml
 <unit id='org.example.abc.feature.group' version='1.0.0.v20250601-000' singleton='false'>
   <update id='org.example.abc.feature.group' range='[0.0.0,1.0.0.v20250601-000)' severity='0'/>
@@ -205,7 +205,7 @@ i.e., analogous to the mapping of the artifact in an artifact repository.
 ### Binary Mapping
 
 A binary unit is a component of type [library](https://cyclonedx.org/docs/1.6/json/#components_items_type).
-It corresponds to both an installable unit as well as that unit's associated artifact.
+It corresponds to both an installable unit and that unit's associated artifact.
 ```xml
 <unit id='org.example.abc.executable_root.gtk.linux.x86_64' version='1.0.0.v20250601-000'>
   <provides size='1'>
@@ -238,7 +238,7 @@ It corresponds to both an installable unit as well as that unit's associated art
 </unit>
 ```
 It is generally a zip file
-whose content is processed by so-called touchpoints to provision artifacts into an installation.
+whose contents are processed by so-called touchpoints to provision artifacts into an installation.
 For example,
 it can contain a native executable
 that will be assigned the appropriate POSIX permissions when placed at its intended destination.
@@ -364,7 +364,7 @@ a `maven` type PURL is associated with the component.
 Otherwise a `p2` type PURL is associated with the component where
 a bundle unit's classifier is `osgi.bundle`,
 a feature unit's classifier is `org.eclipse.update.feature`,
-a binary unit's classifier is  `binary`,
+a binary unit's classifier is `binary`,
 and a metadata unit's classifier is `metadata`.
 While metadata and artifact repositories are typically colocated,
 that's not always the case
@@ -406,12 +406,12 @@ In all cases,
 each such jar is mapped to a [nested component](https://cyclonedx.org/docs/1.6/json/#components_items_components).
 
 The CBI p2 SBOM generator scans for such jars on the bundle classpath, and attempts to determine the corresponding Maven artifact:
-- It looks for POM details in the jar or adjacent to jar to determine the Maven coordinates.
+- It looks for POM details in the jar or adjacent to the jar to determine the Maven coordinates.
 - It queries Maven Central for the SHA-1 of the jar.
 - It queries Maven Central based on the `artifactId`, `version`, and optional `classifier` as determined by the name of the jar.
 
 Based on a successful query result,
-the generator will verify that the corresponding Maven artifact exists and is byte-for-byte equal to nested jar.
+the generator will verify that the corresponding Maven artifact exists and is byte-for-byte equal to the nested jar.
 If the Maven artifact is byte-for-byte equal,
 a Maven-type [PURL](#purl)
 is associated with the nested jar component.
@@ -447,7 +447,7 @@ Often this information is recorded in a poorly standardized way, making reliable
 As described in the [Unit Properties](#unit-properties) section,
 the [publisher](https://cyclonedx.org/docs/1.6/json/#components_items_publisher)
 and [description](https://cyclonedx.org/docs/1.6/json/#components_items_description) of the component
-(which also encoded the human-readable name)
+(which also encode the human-readable name)
 are presented as details in the SBOM renderer.
 
 ### Properties
@@ -505,12 +505,12 @@ the actual details of the unit's requirements provide significantly more value t
 Specifically,
 suppose that a new version of some library that addresses some CVE becomes available,
 the question of whether that library's version is such that it can be substituted,
-i.e., lies with the permissible version range,
+i.e., lies within the permissible version range,
 becomes highly significant,
 and this cannot be answered by the details in the SBOM itself.
 
 Although the SBOM represents dependencies in only one direction, 
-the SBOM renderer shows dependencies both directions,
+the SBOM renderer shows dependencies in both directions,
 i.e., both incoming and outgoing dependencies.
 
 
@@ -524,17 +524,17 @@ mojo.
 It provides
 [an example](https://github.com/eclipse-tycho/tycho/tree/main/tycho-its/projects/sbom)
 of how to use it.
-Applying this to the Eclipse Installer has provided a useful basis for comparing the SBOMs generated Tycho with that generated by the CBI p2 SBOM generator.
+Applying this to the Eclipse Installer has provided a useful basis for comparing the SBOMs generated by Tycho with that generated by the CBI p2 SBOM generator.
 
 ### Tycho SBOM Comparison
 
-The Tycho SBOMs don't properly use the bom-ref of the component for specifying dependencies but rather are using two different styles,
+The Tycho SBOMs don't properly use the bom-ref of the component for specifying dependencies but rather use two different styles,
 either the `pkg:maven` or `pkg:p2` for a given component.
-Also it has references to components that don't exist in the final distribution, e.g., `*.source` bundles.
-In the end, we can't really even a hack a workaround because the SBOM does not contain the bundle symbolic name of the component, only the maven coordinates.
+Also, it has references to components that don't exist in the final distribution, e.g., `*.source` bundles.
+In the end, we can't really even hack a workaround because the SBOM does not contain the bundle symbolic name of the component, only the Maven coordinates.
 The Tycho SBOMs seem to have odd components that aren't actually in the product repository,
 e.g., com.sun.xml.bind,
 probably as a result of resolving package requirements to all possible providers in the target platform,
-also lots of `*.source` bundles that aren't in the product.
-More care must be taken when generating PURLs that in fact the Maven artifact has the same hash sums as the p2/local artifact,
+and lots of `*.source` bundles that aren't in the product.
+More care must be taken when generating PURLs to ensure that the Maven artifact has the same hash sums as the p2/local artifact,
 i.e., is unmodified.

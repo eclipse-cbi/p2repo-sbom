@@ -4,34 +4,34 @@ The CBI p2 SBOM Generator provides a web-based renderer for viewing and analyzin
 It is designed to render [CycloneDX](https://cyclonedx.org/) SBOMs of the form 
 produced by the generator,
 produced by [tycho-sbom](overview.md#tycho-sbom),
-and as downloaded from [dependency-track](https://dependencytrack.org/).
+and those downloaded from [dependency-track](https://dependencytrack.org/).
 
-For use at `eclipse.org` the renderer is hosted at
+For use at `eclipse.org`, the renderer is hosted at
 [https://download.eclipse.org/cbi/sbom/](https://download.eclipse.org/cbi/sbom/).
 
 ![](assets/renderer-input.png)
 
 The view is augmented with help icons,
 i.e., ![](https://raw.githubusercontent.com/eclipse-cbi/p2repo-sbom/refs/heads/main/www/help.svg),
-that provides documentation within the renderer itself.
+that provide documentation within the renderer itself.
 The following is the documentation for specifying the input to the renderer:
 
 ![](assets/renderer-input-documentation.png)
 
 The full content of the web site is available in the folder
 [https://github.com/eclipse-cbi/p2repo-sbom/tree/main/www](https://github.com/eclipse-cbi/p2repo-sbom/tree/main/www)
-and is easily hosted anywhere with no special host requirements.
+and can be easily hosted anywhere with no special host requirements.
 The [Integrated SBOM Renderer](ide-guide.md#integrated-sbom-renderer)
 programmatically [copies the site](https://github.com/eclipse-cbi/p2repo-sbom/blob/59f5dcf10ecc66a117202c0b81ed29bd93435233/plugins/org.eclipse.cbi.p2repo.sbom.ui/src/org/eclipse/cbi/p2repo/sbom/ui/SBOMRenderer.java#L181-L207)
 and starts a simple local web server to make the site available via `localhost`.
 
 ## Specifying a Query Parameter
 
-The input URI can be directly specified as a `file=` query parameter to the render.
+The input URI can be directly specified as a `file=` query parameter to the renderer.
 
 `https://download.eclipse.org/cbi/sbom/?file=<uri>`
 
-This supports specifying convenient links a rendered SBOM,
+This supports specifying convenient links to a rendered SBOM,
 e.g.,
 [![](https://download.eclipse.org/cbi/sbom/favicon.ico) SimRel 2025-12 SBOM](https://download.eclipse.org/cbi/sbom/?file=https://download.eclipse.org/releases/2025-12/202512101000/buildInfo/sbom/simrel/sbom.xml).
 
@@ -47,8 +47,8 @@ to upload SBOMs and analyze them for vulnerabilities.
 The generator can be used to generate an SBOM that is uploaded to `sbom.eclipse.org`
 as described in the [Maven/Jenkins Integration](build-guide.md) guide.
 Due to current limitations of `dependency-track`,
-it's best to use the [`-dependency-track`](cli-guide.md#-dependency-track) option for generating the SBOM to be uploaded.
-A `dependency-track` SBOM can subsequently be downloaded, enhanced with vulnerabilities details,
+it is best to use the [`-dependency-track`](cli-guide.md#-dependency-track) option for generating the SBOM to be uploaded.
+A `dependency-track` SBOM can subsequently be downloaded, enhanced with vulnerability details,
 using `Components → Download BOM → Inventory with Vulnerabilities`
 for viewing in the renderer:
 
@@ -65,4 +65,4 @@ and to show only `External References` of type `advisories` as children.
 ![](assets/renderer-vulnerabilities.png)
 
 Note that in this case the renderer displays a `dependency-track` property that links back to the originating `dependency-track` project
-and that each component has a <img class="icon" style="max-width: 1em;" src="https://sbom.eclipse.org/favicon.ico"> link to that component's `dependenecy-track` details.
+and that each component has a <img class="icon" style="max-width: 1em;" src="https://sbom.eclipse.org/favicon.ico"> link to that component's `dependency-track` details.

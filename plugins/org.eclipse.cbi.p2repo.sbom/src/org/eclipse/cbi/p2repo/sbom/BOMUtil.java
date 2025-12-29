@@ -17,7 +17,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -129,10 +128,9 @@ public final class BOMUtil {
 	}
 
 	public static void addHashes(Component component, byte[] bytes) {
-		Map<String, Hash> hashes = ALGORITHMS.parallelStream()
-				.map(algorithm -> new Hash(algorithm, computeHash(algorithm, bytes)))
+		var hashes = ALGORITHMS.parallelStream().map(algorithm -> new Hash(algorithm, computeHash(algorithm, bytes)))
 				.collect(Collectors.toMap(Hash::getAlgorithm, Function.identity()));
-		for (String algorithm : ALGORITHMS) {
+		for (var algorithm : ALGORITHMS) {
 			component.addHash(hashes.get(algorithm));
 		}
 	}

@@ -4,7 +4,7 @@ The CBI p2 SBOM Generator provides IDE Integration for generating and reviewing 
 
 ## Tool Installation
 
-Use `Help → Install New Software...` with the following site to install the generator into any IDE:
+Use `Help → Install New Software...` with the following update site to install the generator into any IDE:
  
 `https://download.eclipse.org/cbi/updates/p2-sbom/tools/nightly/latest`
 
@@ -31,17 +31,17 @@ In particular, the following options can be specified:
 - [`-advisory`](cli-guide.md#-advisory)
 - [`-process-bundle-classpath`](cli-guide.md#-process-bundle-classpath)
 
-The dialog is non-modal and shows progress while generating the SBOM.
+The dialog is non-modal and shows progress while the SBOM is being generated.
 
 ![](assets/generate-self-sbom-wizard-progress.png)
 
 When generation completes successfully,
-the wizard optionally opens the generated SBOM in the integrated SBOM renderer.
+the wizard can optionally open the generated SBOM in the integrated SBOM renderer.
 
 
 ## Integrated SBOM Renderer
 
-The tools support viewing rendered SBOMs via a specialized editor that uses the IDE's internal browser.
+The tools support viewing rendered SBOMs using a specialized editor that uses the IDE's internal browser.
 
 ![](assets/ide-render.png)
 
@@ -55,8 +55,8 @@ The `Folder` must specify a folder within an existing project,
 but the folder itself need not yet exist
 and will be created by the generator,
 e.g., here `eclipse-sdk`.
-A number `Template` choices are available,
-but you can change the text to specify any valid [command line arguments](cli-guide.md).
+A number of `Template` choices are available,
+but you can change the text to specify any valid [command-line arguments](cli-guide.md).
 
 ![](assets/new-sbom-wizard-main.png)
 
@@ -73,5 +73,5 @@ The integrated SBOM renderer supports opening an `index.html` which provides lin
 ![](assets/ide-render-index.png)
 
 This can optionally be automatically opened by the [New SBOM Wizard](#new-sbom-wizard).
-At any later point in time,
- you can use the context menu's `Open With → Renderer` to open the integrated SBOM renderer. 
+At any later time,
+you can use the context menu's `Open With → Renderer` to open the integrated SBOM renderer. 
