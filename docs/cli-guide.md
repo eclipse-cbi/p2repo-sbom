@@ -391,3 +391,20 @@ http://localhost:${localhost.port}/sbom
 -preview
 ${system_property:user.home}->http://localhost:${localhost.port}/user.home/
 ```
+
+##### Index for Slices Example
+
+The following is an interesting example of an index produced for all the Eclipse IDE products
+providing rendered and raw links to the generated SBOMs:
+
+- [https://download.eclipse.org/releases/2025-12/202512101000/buildInfo/sbom/epp/](https://download.eclipse.org/releases/2025-12/202512101000/buildInfo/sbom/epp/)
+
+The [simrel.sbom](https://ci.eclipse.org/simrel/job/simrel.sbom/) build job uses [`-slices`](#-slices-slice-spec) to specify the IDE products for which to generate individual SBOMs
+producing the following result:
+
+![](assets/simrel-index.png)
+
+The sections are expandable to show the command-line arguments for each individual invocation
+as well as the `Arguments` for the overall application invocation.
+
+![](assets/simrel-index-arguments.png)
