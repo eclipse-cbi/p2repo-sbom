@@ -518,6 +518,11 @@
 			return `<button class="toggle-sample">${value}</button>`;
 		}
 
+		function help(value) {
+			const link = value.startsWith('#') ? 'https://eclipse.dev/simrel/cbi/?file=eclipse-cbi/p2repo-sbom/main/docs/overview.md' + value : value;
+			return `<a href="${link}" target='help'><img class="iconx" src="help.svg"></a>`;
+		}
+
 		function generateButton(all) {
 			return `<button ${all ? 'id="all"' : ''} class="toggle" onclick="${all ? 'toggleAll' : 'toggle'}(this)">${collapsed}</button>`;
 		}
@@ -1994,7 +1999,7 @@ ${componentElements.join('\n')}
 						The units of a p2 repository or an Eclipse product installation are categorized according to the following classifiers.
 					</p>
 					<dl>
-						<dt><img alt="" src="binary.svg"> Binary</dt>
+						<dt><img alt="" src="binary.svg"> Binary <span data-generate="help('#binary-mapping')"></span></dt>
 						<dd>
 							A binary unit is a component of type <a href="https://cyclonedx.org/docs/1.6/json/#components_items_type">library</a>.
 							It is generally a zip file
@@ -2003,13 +2008,13 @@ ${componentElements.join('\n')}
 							it can contain a native executable
 							that will be assigned the appropriate POSIX permissions when placed at its intended destination.
 						</dd>
-						<dt><img alt="" src="bundle.svg"> Bundle</dt>
+						<dt><img alt="" src="bundle.svg"> Bundle <span data-generate="help('#bundle-mapping')"></span></dt>
 						<dd>
 							A bundle unit is a component of type <a href="https://cyclonedx.org/docs/1.6/json/#components_items_type">library</a>.
 							It is a jar representing an OSGi bundle.
 							The jar may be unpacked when provisioned into an installation.
 						</dd>
-						<dt><img alt="" src="feature.svg"> Feature</dt>
+						<dt><img alt="" src="feature.svg"> Feature <span data-generate="help('#feature-mapping')"></span></dt>
 						<dd>
 							A feature unit is a component of type <a href="https://cyclonedx.org/docs/1.6/json/#components_items_type">library</a>.
 							It is a jar representing an Eclipse feature,
@@ -2017,7 +2022,7 @@ ${componentElements.join('\n')}
 							that should be installed together to provide some logically cohesive functionality.
 							The jar may be unpacked when provisioned into an installation.
 						</dd>
-						<dt><img alt="" src="metadata.svg"> Metadata</dt>
+						<dt><img alt="" src="metadata.svg"> Metadata <span data-generate="help('#metadata-mapping')"></span></dt>
 						<dd>
 							A metadata unit is a component of type <a href="https://cyclonedx.org/docs/1.6/json/#components_items_type">data</a>.
 							It is a logical component for which no corresponding physical artifact exists.
@@ -2081,7 +2086,7 @@ ${componentElements.join('\n')}
 			</div>
 
 			<div id="help-purl" class="modal-popup-description">
-				<h3>Package URL</h3>
+				<h3>Package URL <span data-generate="help('#purl')"></span></h3>
 				<p>
 					Each component optionally has a <a href="https://cyclonedx.org/docs/1.6/json/#components_items_purl">PURL</a>, or package-url, that uniquely identifies the component.
 					For the CBI p2 SBOM Generator, every component has an associated PURL.
@@ -2105,7 +2110,7 @@ ${componentElements.join('\n')}
 			</div>
 
 			<div id="help-pedigree" class="modal-popup-description">
-				<h3>Pedigree</h3>
+				<h3>Pedigree <span data-generate="help('#pedigree')"></span></h3>
 				<p>
 					In some cases a component is known to be derived from another component.
 					The component from which it is derived is recorded as the <a href="https://cyclonedx.org/docs/1.6/json/#components_items_pedigree">pedigree</a>,
@@ -2134,7 +2139,7 @@ ${componentElements.join('\n')}
 			</div>
 
 			<div id="help-jar" class="modal-popup-description">
-				<h3>Nested Jars</h3>
+				<h3>Nested Jars <span data-generate="help('#nested-jars')"></span></h3>
 				<p>
 					In some cases a bundle may embed one or more jars and place them on the
 					<a href="https://docs.osgi.org/specification/osgi.core/8.0.0/framework.module.html#framework.module.bundleclasspath">bundle's classpath</a>.
@@ -2151,7 +2156,7 @@ ${componentElements.join('\n')}
 			</div>
 
 			<div id="help-hashsum" class="modal-popup-description">
-				<h3>Hash Sum</h3>
+				<h3>Hash Sum <span data-generate="help('#hashes')"></span></h3>
 				<p>
 					Each component optionally has <a href="https://cyclonedx.org/docs/1.6/json/#components_items_hashes">hashes</a>
 					to provide a way to verify that a component's content matches what is expected.
@@ -2166,7 +2171,7 @@ ${componentElements.join('\n')}
 			</div>
 
 			<div id="help-license" class="modal-popup-description">
-				<h3>License</h3>
+				<h3>License <span data-generate="help('#licenses')"></span></h3>
 				<p>
 					Each component optionally has <a href="https://cyclonedx.org/docs/1.6/json/#components_items_licenses">licenses</a>.
 					Licences are bit of a mess.
@@ -2180,7 +2185,7 @@ ${componentElements.join('\n')}
 			</div>
 
 			<div id="help-detail" class="modal-popup-description">
-				<h3>Detail</h3>
+				<h3>Detail <span data-generate="help('#details')"></span></h3>
 				<p>
 					Each component optionally has supplementary details such as
 					<a href="https://cyclonedx.org/docs/1.6/json/#components_items_publisher">publisher</a> and
@@ -2193,7 +2198,7 @@ ${componentElements.join('\n')}
 			</div>
 
 			<div id="help-property" class="modal-popup-description">
-				<h3>Property</h3>
+				<h3>Property <span data-generate="help('#properties')"></span></h3>
 				<p>
 					Each component optionally has <a href="https://cyclonedx.org/docs/1.6/json/#components_items_properties">properties</a>,
 					i.e., a series of name-value pairs that capture additional relevant information.
@@ -2228,7 +2233,7 @@ ${componentElements.join('\n')}
 			</div>
 
 			<div id="help-external" class="modal-popup-description">
-				<h3>External Reference</h3>
+				<h3>External Reference <span data-generate="help('#external-references')"></span></h3>
 				<p>
 					Each component optionally has <a href="https://cyclonedx.org/docs/1.6/json/#components_items_externalReferences">external references</a>,
 					i.e., a series of <a href="https://cyclonedx.org/docs/1.6/json/#components_items_externalReferences_items_type">typed</a>
@@ -2262,7 +2267,7 @@ ${componentElements.join('\n')}
 			</div>
 
 			<div id="help-dependency" class="modal-popup-description">
-				<h3>Dependency: Incoming and Outgoing</h3>
+				<h3>Dependency: Incoming and Outgoing <span data-generate="help('#dependencies')"></span></h3>
 				<p>
 					An SBOM supports specifying <a href="https://cyclonedx.org/docs/1.6/json/#dependencies">dependencies</a> between components.
 					Directly represented in the SBOM are each
