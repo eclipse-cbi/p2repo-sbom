@@ -42,3 +42,11 @@ The following job builds the headless product and the update sites:
 The website is kept up-to-date via the following job:
 
 - https://ci.eclipse.org/cbi/view/p2RepoRelated/job/cbi.p2repo.sbom-promote-website/
+
+## Acknowledgement
+
+[YourKit](https://www.yourkit.com/) is kindly supporting open source projects with its full-featured YourKit Java Profiler.
+YourKit, LLC is the creator of innovative and intelligent tools for profiling Java and .NET applications.
+
+With the help of the YourKit Java Profiler,
+the performance of the CBI p2 SBOM Generator is significantly improved.
