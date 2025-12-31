@@ -143,15 +143,53 @@ public class SBOMGenerator extends AbstractApplication {
 
 	private static final String A_JRE_JAVASE_ID = "a.jre.javase";
 
-	private static final Pattern IGNORED_LICENSE_URL_PATTERN = Pattern.compile(String.join("|",
-			List.of("https://[^/]+", "https://github.com/[^/]+/[^/]+/(commit/.*|issues)", ".*\\.(xsd|dtd|java|xml)",
-					"https://github.com/microsoft/vscode/tree/.*", "https://mail-archives.apache.org/.*",
-					"https://schemas.xmlsoap.org/.*", "https://www.w3.org/TR/.*", "https://dev.eclipse.org/mhonarc/.*",
-					"https://www.sun.com/.*", "https://www.omg.org/(docs|spec|technology)/.*",
-					"https://issues.apache.org/.*")));
-
 	private static final Pattern ACCEPTED_LICENSE_URL_PATTERN = Pattern.compile(
-			".*(documents/e[dp]l-v10|epl-v20|epl-2.0|legal|licen[cs]e|/MPL)(.*[^/])?", Pattern.CASE_INSENSITIVE);
+			".*(documents/e[dp]l-v10|epl-v20|epl-2.0|legal|licen[cs]e|/MPL|CDDLv1.0)(.*[^/])?",
+			Pattern.CASE_INSENSITIVE);
+
+	private static final Pattern IGNORED_LICENSE_URL_PATTERN = Pattern.compile(String.join("|", List.of(//
+			"https://code.visualstudio.com/api/language-extensions/language-configuration-guide", //
+			"https://commons.apache.org/collections", //
+			"https://commons.apache.org/proper/commons-codec", //
+			"https://developers.google.com/closure/compiler", //
+			"https://eclipse-ee4j.github.io/jaxb-ri/jaxb-bundles/jaxb-impl", //
+			"https://eclipse.org/equinox/p2/repository_packaging.html", //
+			"https://en.wikipedia.org/wiki/TextMate#Language_Grammars", //
+			"https://fortawesome.github.io/Font-Awesome", //
+			"https://github.com/eclipse-ee4j/jaf/jakarta.activation", //
+			"https://groups.google.com/forum/.*", //
+			"https://jakarta.apache.org/commons/logging", //
+			"https://java.sun.com/products/javamail/javamail-1_4.html", //
+			"https://jcp.org/aboutJava/communityprocess/.*", //
+			"https://jcp.org/.*/jsr/.*", //
+			"https://lasr.cs.ucla.edu/geoff/ispell.html", //
+			"https://live.gnome.org/LibSoup", //
+			"https://projects.eclipse.org/projects/ee4j.*", //
+			"https://scripts.sil.org/OFL", //
+			"https://sourceforge.net/projects/(lpg|wsdl4j)", //
+			"https://svn.apache.org/repos/asf/tomcat/trunk/java/javax/servlet", //
+			"https://wiki.eclipse.org/.*", //
+			"https://ws.apache.org/axis", //
+			"https://ws.apache.org/xmlrpc/.*", //
+			"https://www.antlr.org/download/index.html", //
+			"https://www.eclipse.org/(collections|eclipselink).*", //
+			"https://www.nayuki.io/page/deflate-library-java", //
+			"https://www.nuget.org/packages/Microsoft.Web.WebView2/1.0.721-prerelease", //
+			"https://www.openmobilealliance.org/tech/affiliates/wap/wapindex.html", //
+			"https://xerces.apache.org/xerces-j", //
+			"https://xml.apache.org/xalan-j", //
+			"https://[^/]+", //
+			"https://github.com/[^/]+/[^/]+(/(commit/.*|issues|tree/.*))?", //
+			".*\\.(xsd|dtd|java|xml)", //
+			"https://github.com/microsoft/vscode/tree/.*", //
+			"https://mail-archives.apache.org/.*", //
+			"https://schemas.xmlsoap.org/.*", //
+			"https://www.w3.org/TR/.*", //
+			"https://dev.eclipse.org/mhonarc/.*", //
+			"https://www.sun.com/.*", //
+			"https://www.omg.org/(docs|spec|technology)/.*", //
+			"https://issues.apache.org/.*"//
+	)));
 
 	private static final Pattern POTENTIAL_LICENSE_REFERENCE_PATTERN = Pattern
 			.compile("href=['\"]https?://(.*?)[/\r\n ]*['\"]");
@@ -196,13 +234,145 @@ public class SBOMGenerator extends AbstractApplication {
 
 	private static final Pattern BUNDLE_PROPERTIES_PATTERN = Pattern.compile("(.*/)?(bundle|plugin).properties$");
 
+	private static List<Map.Entry<Pattern, String>> URL_LICENSE_MAPPINGS = List.of( //
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"https://opensource.org/licenses?/EPL-2.0", //
+					"https://eclipse.org/legal/epl/notice.php", //
+					"https://projects.eclipse.org/license/epl-2.0", //
+					"https://www.eclipse.org/(org/documents|legal)/epl-(2.0(/?|/EPL-2.0.txt)|v20.html)"))), //
+					"EPL-2.0"),
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"https://(www[.])?apache.org/licenses(/LICENSE-2.0([.].*)?)?", //
+					"https://repository.jboss.org/licenses/apache-2.0.txt", //
+					"https://opensource.org/licenses?/apache2.0.php", //
+					"https://opensource.org/licenses?/Apache-?2.0", //
+					"https://maven.apache.org/license.html", //
+					"https://jakarta.apache.org/commons/license.html", //
+					"https://ant.apache.org/license.html", //
+					"https://jakarta.apache.org/ant/manual/LICENSE"))), //
+					"Apache-2.0"), //
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"https://opensource.org/licenses?/BSD-3-Clause", //
+					"https://asm.ow2.io/LICENSE.txt", //
+					"https://www.eclipse.org/(org/documents|licenses)/edl-v10[.](html|php)",
+					"https://www.antlr.org/license.html", //
+					"https://www.jcraft.com/(jsch|jzlib)/LICENSE.txt", //
+					"https://raw.githubusercontent.com/dnsjava/dnsjava/master/LICENSE",
+					"https://github.com/dom4j/dom4j/blob/(main|master)/LICENSE", //
+					"https://raw.githubusercontent.com/jaxen-xpath/jaxen/master/LICENSE.txt", //
+					"https://raw.githubusercontent.com/hamcrest/JavaHamcrest/master/LICENSE", //
+					"https://raw.github.com/hunterhacker/jdom/master/LICENSE.txt", //
+					"https://asm.ow2.io/license.html"))), //
+					"BSD-3-Clause"),
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"https://(www[.])?opensource.org/licenses?/(mit/?|mit-license.php|MIT)", //
+					"https://jsoup.org/license", //
+					"https://jquery.org/license", //
+					"https://github.com/burningwave/jvm-driver/blob/(main|master)/LICENSE", //
+					"https://www.chiark.greenend.org.uk/~sgtatham/putty/licence.html", //
+					"https://www.bouncycastle.org/licence.html",
+					"https://github.com/(burningwave/core|weisj/jsvg|toolfactory/(jvm-driver|narcissus))/blob/(main|master)/LICENSE"))), //
+					"MIT"),
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"https://opensource.org/licenses/eclipse-1.0.php", //
+					"https://www.eclipse.org/(org/documents|legal)/epl-v10[.](html|php)"))), //
+					"EPL-1.0"),
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"https://xml.apache.org/dist/LICENSE.txt", //
+					"https://www.apache.org/licenses/LICENSE"))), //
+					"Apache-1.1"),
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"https://(www[.])?opensource.org/licenses?/(bsd-license.(html|php)|BSD-2-Clause)", //
+					"https://www.debian.org/misc/bsd.license"))), //
+					"BSD-2-Clause"),
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"https://webkit.org/coding/bsd-license.html", //
+					"https://www.gnu.org/licenses/(old-licenses/)?lgpl-2.1([.]html)?"))), //
+					"LGPL-2.1-only"),
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"https://www.gnu.org/copyleft/gpl.html", //
+					"https://www.gnu.org/copyleft/lesser.html", //
+					"https://www.gnu.org/licenses/lgpl.html", //
+					"https://www.gnu.org/licenses/lgpl-3.0.txt"))), //
+					"LGPL-3.0-or-later"),
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"https://projects.eclipse.org/license/secondary-gpl-2.0-cp", //
+					"https://www.gnu.org/software/classpath/license.html"))), //
+					"Classpath-exception-2.0"),
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"https://glassfish.dev.java.net/nonav/public/CDDL[+]GPL.html", //
+					"https://oss.oracle.com/licenses/CDDL[+]GPL-1.1", //
+					"https://glassfish.*/CDDLv1.0.*"))), //
+					"CDDL-1.1"),
+			Map.entry(Pattern.compile("https://www.mozilla.org/([^/]+/)?MPL/(MPL-)?1.1([.]html|/)?"), //
+					"MPL-1.1"),
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"https://h2database.com/html/license.html", //
+					"https://www.mozilla.org/([^/]+/)?MPL/(MPL-)?2.0([.]html|/|/index.txt)?"))), //
+					"MPL-2.0"),
+			Map.entry(Pattern.compile("https://www.w3.org/Consortium/Legal/2002/copyright-software-20021231"), //
+					"W3C"),
+			Map.entry(
+					Pattern.compile(
+							"https://www.w3.org/Consortium/Legal/copyright-(software-19980720|documents-19990405)"), //
+					"W3C-19980720"),
+			Map.entry(Pattern.compile("https://raw.githubusercontent.com/jtidy/jtidy/(main|master)/LICENSE.txt"), //
+					"HTMLTIDY"),
+			Map.entry(Pattern.compile("https://raw.githubusercontent.com/unicode-org/icu/maint/maint-[^/]+/LICENSE"),
+					"Unicode-3.0"),
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"https://www.eclipse.org/legal/cpl-v10.html", //
+					"https://(www[.])?opensource.org/licenses?/cpl1.0.(html|txt|php)"))), //
+					"CPL-1.0"),
+			Map.entry(Pattern.compile("https://oss.software.ibm.com/developerworks/opensource/license10.html"), //
+					"IPL-1.0"),
+			Map.entry(Pattern.compile("https://jsonp.java.net/license.html"), //
+					"CDDL-1.1"),
+			Map.entry(Pattern.compile("https://creativecommons.org/publicdomain/zero/1.0/?"), //
+					"CC0-1.0"),
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"https://www.w3.org/Consortium/Legal/IPR-FAQ.*", //
+					"https://www.opengroup.org/openmotif/supporters/metrolink/license.html"))), //
+					""),
+			Map.entry(Pattern.compile("https://github.com/stleary/JSON-java/blob/(main|master)/LICENSE"), //
+					"JSON"));
+
+	private static List<Map.Entry<Pattern, String>> COMPONENT_LICENSE_MAPPINGS = List.of( //
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"plugins/org.eclipse.orbit.sun.security.*", //
+					"features/org.eclipse.terminal.feature.*", //
+					"binary/epp\\.package\\..*\\.executable.*", //
+					"binary/org.eclipse\\.(platform|sdk)\\.(rcp|ide)\\.executable.*", //
+					"binary/org\\.eclipse\\.(sdk\\.ide)\\.executable.*", //
+					"binary/org\\.eclipse\\.(cdt|platform|rcp|sdk\\.examples)_root_.*"))), //
+					"EPL-2.0"),
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"plugins/ch.qos.logback.core.*"))), //
+					"EPL-1.0"),
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"plugins/org.antlr.runtime.*"))), //
+					"BSD-3-Clause"),
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"plugins/org.aopalliance.*"))), //
+					"Unlicense"),
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"plugins/org\\.apache\\.xml\\.(serializer|resolver).*", //
+					"plugins/org\\.apache\\.xalan.*"))), //
+					"Apache-2.0"),
+			Map.entry(Pattern.compile(String.join("|", List.of( //
+					"plugins/slf4j.*_1\\..*", //
+					"plugins/com.konghq.unirest-java.*"))), //
+					"MIT"));
+
 	private static boolean isMetadata(IArtifactDescriptor artifactDescriptor) {
 		return METADATA_ARTIFACT.equals(artifactDescriptor.getArtifactKey().getClassifier());
 	}
 
-	private final Set<String> rejectedURLs = new TreeSet<>();
+	private final Set<String> allLicenses = ConcurrentHashMap.newKeySet();
 
-	private final Set<String> allLicenses = new TreeSet<>();
+	private final Set<String> ignoredLicense = ConcurrentHashMap.newKeySet();
+
+	private final Set<String> rejectedLicense = ConcurrentHashMap.newKeySet();
 
 	private final Set<IMetadataRepository> metadataRepositories = new LinkedHashSet<>();
 
@@ -422,12 +592,19 @@ public class SBOMGenerator extends AbstractApplication {
 				progress.split(80, SubMonitor.SUPPRESS_NONE));
 
 		if (verbose) {
-			System.out.println("licenes");
-			allLicenses.stream().forEach(System.out::println);
+			System.out.println("licenses");
+			new TreeSet<>(allLicenses).stream().forEach(System.out::println);
 
-			System.out.println();
-			System.out.println("rejected-url");
-			rejectedURLs.stream().forEach(System.out::println);
+			if (!rejectedLicense.isEmpty()) {
+				System.out.println();
+				System.out.println("rejected-url");
+				new TreeSet<>(rejectedLicense).stream().forEach(System.out::println);
+				if (Boolean.FALSE) {
+					for (var license : new TreeSet<>(rejectedLicense)) {
+						System.out.println('"' + license + '"' + ", //");
+					}
+				}
+			}
 		}
 
 		if (dependencyTrack) {
@@ -729,7 +906,7 @@ public class SBOMGenerator extends AbstractApplication {
 
 					var bytes = getArtifactContent(component, artifactDescriptor);
 					setPurl(component, iu, artifactDescriptor, bytes);
-					gatherLicences(component, iu, artifactDescriptor, bytes);
+					gatherLicenses(component, iu, artifactDescriptor, bytes);
 					gatherInnerJars(component, bytes, artifactDescriptor);
 					gatherAdvisory(component);
 					resolveDependencies(getDependencies(iu), iu, processDependencyIUs);
@@ -869,9 +1046,7 @@ public class SBOMGenerator extends AbstractApplication {
 		// Add the root dependencies for the metadata root component.
 		var rootDependency = new Dependency(bom.getMetadata().getComponent().getBomRef());
 		bom.getDependencies().add(0, rootDependency);
-		for (var root : roots) {
-			rootDependency.addDependency(new Dependency(root));
-		}
+		rootDependency.setDependencies(roots.stream().map(Dependency::new).toList());
 	}
 
 	private Set<String> gatherReachableDependencies(Set<String> visited, Map<String, List<String>> dependencies,
@@ -1639,7 +1814,7 @@ public class SBOMGenerator extends AbstractApplication {
 		}
 	}
 
-	private void gatherLicences(Component component, IInstallableUnit iu, IArtifactDescriptor artifactDescriptor,
+	private void gatherLicenses(Component component, IInstallableUnit iu, IArtifactDescriptor artifactDescriptor,
 			byte[] bytes) {
 		var licenseToName = new TreeMap<String, String>();
 		if (bytes.length > 2 && bytes[0] == 0x50 && bytes[1] == 0x4B) {
@@ -1667,9 +1842,12 @@ public class SBOMGenerator extends AbstractApplication {
 			if (location != null) {
 				var value = location.toString();
 				if (!value.startsWith("%")) {
-					licenseToName.putIfAbsent(value, null);
+					addLicense(licenseToName, value, null);
 				}
 			}
+		}
+		if (licenseToName.isEmpty()) {
+			gatherKnownLicenses(component, iu, licenseToName);
 		}
 
 		if (!licenseToName.isEmpty()) {
@@ -1694,6 +1872,19 @@ public class SBOMGenerator extends AbstractApplication {
 		}
 	}
 
+	private void gatherKnownLicenses(Component component, IInstallableUnit iu, Map<String, String> licenseToName) {
+		var bomRef = component.getBomRef();
+		for (var entry : COMPONENT_LICENSE_MAPPINGS) {
+			if (entry.getKey().matcher(bomRef).matches()) {
+				var spdxID = entry.getValue();
+				if (!spdxID.isEmpty()) {
+					addSPDXLicense(licenseToName, spdxID);
+				}
+				return;
+			}
+		}
+	}
+
 	private void gatherComponentDetailsFromJar(Component component, byte[] bytes, Map<String, String> licenseToName) {
 		try (var zip = new ZipInputStream(new ByteArrayInputStream(bytes))) {
 			ZipEntry entry;
@@ -1708,16 +1899,14 @@ public class SBOMGenerator extends AbstractApplication {
 					if ("Eclipse Public License v2.0".equals(bundleLicense)
 							|| "Eclipse Public License, Version 2.0;link=\"http://www.eclipse.org/legal/epl-2.0\""
 									.equals(bundleLicense)) {
-						licenseToName.put("https://www.eclipse.org/legal/epl-v20.html", "EPL-2.0");
+						addSPDXLicense(licenseToName, "EPL-2.0");
 					} else if ("Eclipse Public License v1.0".equals(bundleLicense)) {
-						licenseToName.put("https://www.eclipse.org/legal/epl-v10.html", "EPL-1.0");
-					} else if ("The Apache License, Version 2.0".equals(bundleLicense)) {
-						licenseToName.put("https://www.apache.org/licenses/LICENSE-2.0", "Apache-2.0");
+						addSPDXLicense(licenseToName, "EPL-1.0");
+					} else if ("The Apache License, Version 2.0".equals(bundleLicense)
+							|| "Apache License, Version 2.0; see: http://www.apache.org/licenses/LICENSE-2.0.txt"
+									.equals(bundleLicense)) {
+						addSPDXLicense(licenseToName, "Apache-2.0");
 					} else if (bundleLicense != null) {
-						if ("Apache License, Version 2.0; see: http://www.apache.org/licenses/LICENSE-2.0.txt"
-								.equals(bundleLicense)) {
-							bundleLicense = "Apache-2.0;location=http://www.apache.org/licenses/LICENSE-2.0.txt";
-						}
 						var bundleLicenseElements = ManifestElement.parseHeader("Bundle-License", bundleLicense);
 						for (var bundleLicenseElement : bundleLicenseElements) {
 							var value = bundleLicenseElement.getValue();
@@ -1725,7 +1914,7 @@ public class SBOMGenerator extends AbstractApplication {
 							if (linkAttribute != null) {
 								var links = linkAttribute.split(" *, *");
 								for (var link : links) {
-									licenseToName.put(link, value);
+									addLicense(licenseToName, link, value);
 								}
 							} else {
 								if (value.startsWith("://")) {
@@ -1736,12 +1925,12 @@ public class SBOMGenerator extends AbstractApplication {
 								if (!value.startsWith("http")) {
 									var license = spdxIndex.getLicense(value);
 									if (license != null) {
-										licenseToName.put(license, value);
+										addLicense(licenseToName, license, value);
 									} else {
 										System.err.println("license=" + value);
 									}
 								} else {
-									licenseToName.put(value, null);
+									addLicense(licenseToName, value, null);
 								}
 							}
 						}
@@ -1798,25 +1987,26 @@ public class SBOMGenerator extends AbstractApplication {
 					gatherInformationFromPOM(component, allBytes, licenseToName);
 				} else if ("about.html".equals(name)) {
 					var allBytes = zip.readAllBytes();
-					gatherLicencesFromAbout(component, allBytes, licenseToName);
+					gatherLicensesFromAbout(component, allBytes, licenseToName);
 				} else if (EDL_10_NAME_PATTERN.matcher(name).matches()) {
-					licenseToName.put("https://www.eclipse.org/org/documents/edl-v10.html", "EDL-1.0");
+					// https://lists.spdx.org/g/Spdx-legal/topic/request_for_adding_eclipse/67981884
+					addSPDXLicense(licenseToName, "BSD-3-Clause");
 				} else if (EPL_20_NAME_PATTERN.matcher(name).matches()) {
-					licenseToName.put("https://www.eclipse.org/legal/epl-v20.html", "EPL-2.0");
+					addSPDXLicense(licenseToName, "EPL-2.0");
 				} else if (EPL_10_NAME_PATTERN.matcher(name).matches()) {
-					licenseToName.put("https://www.eclipse.org/legal/epl-v10.html", "EPL-1.0");
+					addSPDXLicense(licenseToName, "EPL-1.0");
 				} else if (META_INF_FILE_PATTERN.matcher(name).matches()) {
 					if (!name.endsWith(".RSA") && !name.endsWith(".SF") && !name.endsWith(".inf")
 							&& !name.endsWith(".DSA") && !name.endsWith("DEPENDENCIES")) {
 						var allBytes = zip.readAllBytes();
-						gatherLicencesFromFile(allBytes, licenseToName);
+						gatherLicensesFromFile(allBytes, licenseToName);
 					}
 				} else if (BUNDLE_PROPERTIES_PATTERN.matcher(name).matches()) {
 					var allBytes = zip.readAllBytes();
-					gatherLicencesFromFile(allBytes, licenseToName);
+					gatherLicensesFromFile(allBytes, licenseToName);
 				} else if (LICENSE_FILE_PATTERN.matcher(name).matches()) {
 					var allBytes = zip.readAllBytes();
-					gatherLicencesFromFile(allBytes, licenseToName);
+					gatherLicensesFromFile(allBytes, licenseToName);
 				}
 				zip.closeEntry();
 			}
@@ -1838,21 +2028,21 @@ public class SBOMGenerator extends AbstractApplication {
 		}
 	}
 
-	private void gatherLicencesFromFile(byte[] bytes, Map<String, String> licenseToName) {
+	private void gatherLicensesFromFile(byte[] bytes, Map<String, String> licenseToName) {
 		var content = new String(bytes, StandardCharsets.UTF_8);
 		if (APACHE_PUBLIC_LICENSE_20_PATTERN.matcher(content).find()) {
-			licenseToName.put("https://www.apache.org/licenses/LICENSE-2.0", "Apache-2.0");
+			addSPDXLicense(licenseToName, "Apache-2.0");
 		} else if (GPL_21_PATTERN.matcher(content).find()) {
-			licenseToName.put("https://spdx.org/licenses/LGPL-2.1-only.html", "LGPL-2.1-only");
+			addSPDXLicense(licenseToName, "LGPL-2.1-only");
 		} else if (content.contains("The Apache Software License, Version 1.1")) {
-			licenseToName.put("http://www.apache.org/licenses/LICENSE-1.1", "Apache-1.1");
+			addSPDXLicense(licenseToName, "Apache-1.1");
 		} else if (content.startsWith("BSD License")) {
-			licenseToName.put("https://spdx.org/licenses/0BSD.html", "0BSD");
+			addSPDXLicense(licenseToName, "0BSD");
 		} else if (content.startsWith("# Eclipse Public License - v 2.0")
 				|| content.startsWith("Eclipse Public License - v 2.0")) {
-			licenseToName.put("https://www.eclipse.org/legal/epl-v20.html", "EPL-2.0");
+			addSPDXLicense(licenseToName, "EPL-2.0");
 		} else if (content.contains("IBM Public License Version 1.0")) {
-			licenseToName.put("https://spdx.org/licenses/IPL-1.0.html", "IBM Public License v1.0");
+			addSPDXLicense(licenseToName, "IPL-1.0");
 		} else {
 			// SPDX-License-Identifier: BSD-3-Clause
 			var matcher = SPDX_ID_PATTERN.matcher(content);
@@ -1861,7 +2051,7 @@ public class SBOMGenerator extends AbstractApplication {
 					var spdxId = matcher.group(1).trim();
 					var license = spdxIndex.getLicense(spdxId);
 					if (license != null) {
-						licenseToName.put(license, spdxId);
+						addLicense(licenseToName, license, spdxId);
 					} else {
 						var parts = spdxId.replaceAll("[()]", "")
 								.split("\\s+OR\\s+|\\s+AND\\s+|\\s+WITH\\s+|\\s+with\\s+");
@@ -1869,7 +2059,7 @@ public class SBOMGenerator extends AbstractApplication {
 							for (var part : parts) {
 								license = spdxIndex.getLicense(part);
 								if (license != null) {
-									licenseToName.put(license, spdxId);
+									addLicense(licenseToName, license, spdxId);
 								} else {
 									System.err.println("license-part='" + part + "'");
 								}
@@ -1885,33 +2075,76 @@ public class SBOMGenerator extends AbstractApplication {
 		}
 	}
 
-	private void gatherLicencesFromAbout(Component component, byte[] bytes, Map<String, String> licenseToName) {
+	private boolean isAcceptedLicense(String url) {
+		if (allLicenses.contains(url)) {
+			return true;
+		}
+		return ACCEPTED_LICENSE_URL_PATTERN.matcher(url).matches();
+	}
+
+	private boolean isIgnoredLicense(String url) {
+		if (ignoredLicense.contains(url) || rejectedLicense.contains(url)) {
+			return true;
+		}
+		return IGNORED_LICENSE_URL_PATTERN.matcher(url).matches();
+	}
+
+	private void gatherLicensesFromAbout(Component component, byte[] bytes, Map<String, String> licenseToName) {
 		var content = new String(bytes, StandardCharsets.UTF_8);
-		var urls = new ArrayList<String>();
+		var urls = new LinkedHashSet<String>();
 		for (var matcher = POTENTIAL_LICENSE_REFERENCE_PATTERN.matcher(content); matcher.find();) {
 			var url = "https://" + matcher.group(1);
-			if (ACCEPTED_LICENSE_URL_PATTERN.matcher(url).matches()) {
-				allLicenses.add(url);
+			if (urls.contains(url)) {
+				continue;
+			}
+
+			if (isAcceptedLicense(url)) {
 				urls.add(url);
-			} else if (!IGNORED_LICENSE_URL_PATTERN.matcher(url).matches()) {
-				rejectedURLs.add(url);
+			} else if (!isIgnoredLicense(url)) {
+				rejectedLicense.add(url);
 			}
 		}
 
 		for (var url : urls) {
-			var old = licenseToName.put(url, null);
-			if (old != null) {
-				licenseToName.put(url, old);
+			addLicense(licenseToName, url, null);
+		}
+
+		if (content.contains("Eclipse Distribution License - v 1.0")
+				|| content.contains("Eclipse Distribution License - Version 1.0")) {
+			addSPDXLicense(licenseToName, "BSD-3-Clause");
+		} else if (content.contains("Eclipse Public License Version 2.0")) {
+			addSPDXLicense(licenseToName, "EPL-2.0");
+		}
+	}
+
+	private void addSPDXLicense(Map<String, String> licenseToName, String id) {
+		var license = spdxIndex.getLicense(id);
+		addLicense(licenseToName, license, id);
+	}
+
+	private void addLicense(Map<String, String> licenseToName, String url, String name) {
+		var license = url.replaceAll("^http://", "https://");
+		if ("xhttps://glassfish.dev.java.net/nonav/public/CDDL+GPL.html".equals(license)) {
+			System.err.println(url);
+		}
+
+		for (var entry : URL_LICENSE_MAPPINGS) {
+			if (entry.getKey().matcher(license).matches()) {
+				var spdxID = entry.getValue();
+				if (!spdxID.isEmpty()) {
+					var spdxLicense = spdxIndex.getLicense(spdxID);
+					allLicenses.add(spdxLicense);
+					licenseToName.put(spdxLicense, spdxID);
+				}
+				return;
 			}
 		}
 
-		if (content.indexOf("Eclipse Distribution License - v 1.0") != -1
-				|| content.indexOf("Eclipse Distribution License - Version 1.0") != -1) {
-			licenseToName.put("https://www.eclipse.org/org/documents/edl-v10.html", "edl-v10");
-		}
-
-		if (content.indexOf("Eclipse Public License Version 2.0") != -1) {
-			licenseToName.put("https://www.eclipse.org/legal/epl-v20.html", "EPL-2.0");
+		allLicenses.add(license);
+		licenseToName.put(license, name);
+		var old = licenseToName.put(license, null);
+		if (old != null) {
+			licenseToName.put(license, old);
 		}
 	}
 
@@ -1943,12 +2176,17 @@ public class SBOMGenerator extends AbstractApplication {
 					}
 					url = spdxLicense;
 				}
+
+				if (!url.startsWith("http")) {
+					continue;
+				}
+
 				var parts = url.split(" *, *");
 				for (var part : parts) {
 					if (part.startsWith("://")) {
 						part = "https" + part;
 					}
-					licenseToName.put(part, name);
+					addLicense(licenseToName, part, name);
 				}
 			}
 		}
