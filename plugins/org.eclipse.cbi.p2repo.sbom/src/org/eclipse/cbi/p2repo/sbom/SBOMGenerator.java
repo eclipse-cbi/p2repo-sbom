@@ -906,7 +906,10 @@ public class SBOMGenerator extends AbstractApplication {
 
 					var bytes = getArtifactContent(component, artifactDescriptor);
 					setPurl(component, iu, artifactDescriptor, bytes);
-					gatherLicenses(component, iu, artifactDescriptor, bytes);
+
+					var mavenDescriptor = MavenDescriptor.create(iu, artifactDescriptor, bytes, queryCentral,
+							contentHandler);
+					gatherLicenses(component, mavenDescriptor, iu, bytes);
 					gatherInnerJars(component, bytes, artifactDescriptor);
 					gatherAdvisory(component);
 					resolveDependencies(getDependencies(iu), iu, processDependencyIUs);
@@ -1230,6 +1233,7 @@ public class SBOMGenerator extends AbstractApplication {
 				var subComponent = mavenDescriptor != null
 						? createMavenJarComponent(component, jar, mavenDescriptor, nestedJarBytes)
 						: createJarComponent(component, jar);
+				gatherLicenses(subComponent, mavenDescriptor, null, nestedJarBytes);
 				addHashes(subComponent, nestedJarBytes);
 				component.addComponent(subComponent);
 			}
@@ -1674,6 +1678,7 @@ public class SBOMGenerator extends AbstractApplication {
 			var pedigree = new Pedigree();
 			var ancenstors = new Ancestors();
 			var ancestorComponent = createAncestorComponent(component, mavenDescriptor);
+			gatherLicenses(ancestorComponent, mavenDescriptor, null, mavenArtifactBytes);
 			addHashes(ancestorComponent, mavenArtifactBytes);
 			ancenstors.addComponent(ancestorComponent);
 			pedigree.setAncestors(ancenstors);
@@ -1814,14 +1819,13 @@ public class SBOMGenerator extends AbstractApplication {
 		}
 	}
 
-	private void gatherLicenses(Component component, IInstallableUnit iu, IArtifactDescriptor artifactDescriptor,
+	private void gatherLicenses(Component component, MavenDescriptor mavenDescriptor, IInstallableUnit iu,
 			byte[] bytes) {
 		var licenseToName = new TreeMap<String, String>();
 		if (bytes.length > 2 && bytes[0] == 0x50 && bytes[1] == 0x4B) {
 			gatherComponentDetailsFromJar(component, bytes, licenseToName);
 		}
 
-		var mavenDescriptor = MavenDescriptor.create(iu, artifactDescriptor, bytes, queryCentral, contentHandler);
 		if (mavenDescriptor != null && !mavenDescriptor.isSnapshot()) {
 			try {
 				var content = contentHandler.getContent(mavenDescriptor.toPOMURI());
@@ -1836,16 +1840,19 @@ public class SBOMGenerator extends AbstractApplication {
 			}
 		}
 
-		var licenses = iu.getLicenses(null);
-		for (var license : licenses) {
-			var location = license.getLocation();
-			if (location != null) {
-				var value = location.toString();
-				if (!value.startsWith("%")) {
-					addLicense(licenseToName, value, null);
+		if (iu != null) {
+			var licenses = iu.getLicenses(null);
+			for (var license : licenses) {
+				var location = license.getLocation();
+				if (location != null) {
+					var value = location.toString();
+					if (!value.startsWith("%")) {
+						addLicense(licenseToName, value, null);
+					}
 				}
 			}
 		}
+
 		if (licenseToName.isEmpty()) {
 			gatherKnownLicenses(component, iu, licenseToName);
 		}
