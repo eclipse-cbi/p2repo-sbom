@@ -335,7 +335,7 @@ public class SBOMGenerator extends AbstractApplication {
 					"https://www.opengroup.org/openmotif/supporters/metrolink/license.html"))), //
 					""),
 			Map.entry(Pattern.compile("https://github.com/stleary/JSON-java/blob/(main|master)/LICENSE"), //
-					"JSON"));
+					"Unlicense"));
 
 	private static List<Map.Entry<Pattern, String>> COMPONENT_LICENSE_MAPPINGS = List.of( //
 			Map.entry(Pattern.compile(String.join("|", List.of( //
