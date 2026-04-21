@@ -1976,7 +1976,11 @@ public class SBOMGenerator extends AbstractApplication {
 								eclipseSourceReferences);
 						for (var eclipseSourceReferenceElement : eclipseSourceReferenceElements) {
 							var value = eclipseSourceReferenceElement.getValue();
-							var query = Collections.list(eclipseSourceReferenceElement.getKeys()).stream()
+							var keys = eclipseSourceReferenceElement.getKeys();
+							if (value == null || keys == null) {
+								continue;
+							}
+							var query = Collections.list(keys).stream()
 									.map(key -> (key + '='
 											+ urlEncodeQueryParameter(eclipseSourceReferenceElement.getAttribute(key))))
 									.collect(Collectors.joining("&", "?", ""));
