@@ -153,37 +153,22 @@ public final record MavenDescriptor(String groupId, String artifactId, String ve
 	}
 
 	public static MavenDescriptor create(Map<String, String> properties) {
-		var mavenGroupId = properties.get("maven-groupId");
-		if (mavenGroupId == null) {
-			mavenGroupId = properties.get("maven-wrapped-groupId");
-		}
+		var mavenDescriptor = create(properties.get("maven-wrapped-groupId"),
+				properties.get("maven-wrapped-artifactId"), properties.get("maven-wrapped-version"),
+				properties.get("maven-wrapped-classifier"), properties.get("maven-wrapped-type"));
+		return mavenDescriptor != null ? mavenDescriptor
+				: create(properties.get("maven-groupId"), properties.get("maven-artifactId"),
+						properties.get("maven-version"), properties.get("maven-classifier"),
+						properties.get("maven-type"));
+	}
 
-		var mavenArtifactId = properties.get("maven-artifactId");
-		if (mavenArtifactId == null) {
-			mavenArtifactId = properties.get("maven-wrapped-artifactId");
-		}
-
-		var mavenVersion = properties.get("maven-version");
-		if (mavenVersion == null) {
-			mavenVersion = properties.get("maven-wrapped-version");
-		}
-
-		var mavenClassifier = properties.get("maven-classifier");
-		if (mavenClassifier == null) {
-			mavenClassifier = properties.get("maven-wrapped-classifier");
-		}
-
-		var mavenType = properties.get("maven-type");
-		if (mavenType == null) {
-			mavenType = properties.get("maven-wrapped-type");
-		}
-
+	public static MavenDescriptor create(String mavenGroupId, String mavenArtifactId, String mavenVersion,
+			String mavenClassifier, String mavenType) {
 		if (mavenGroupId != null && mavenArtifactId != null && mavenVersion != null) {
 			return new MavenDescriptor(mavenGroupId, mavenArtifactId, mavenVersion,
 					mavenClassifier == null || mavenClassifier.isBlank() ? null : mavenClassifier,
-					mavenType == null || mavenType.isBlank() ? "jar" : mavenType);
+					mavenType == null || mavenType.isBlank() || mavenType.contains("-") ? "jar" : mavenType);
 		}
-
 		return null;
 	}
 
