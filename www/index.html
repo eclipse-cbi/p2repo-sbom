@@ -815,12 +815,15 @@ ${getReferenceElementDetail(reference)}
 			const publisher = getModelValue(component, 'publisher');
 			const description = getModelValue(component, 'description');
 			if (publisher != null || description != null) {
-				const publisherDetail = publisher == null ? '' : `<span class="detail-provider">Provider: ${publisher}</span><hr>`;
+				const publisherDetail = publisher == null ? '' : `<span class="detail-provider">Provider: ${publisher}</span>`;
+				const descriptionDetail = description == null ? '' : description.replace(' - \u200B', '<hr>');
+				const separator = publisher == null || description == null ? '' : '<hr>';
 				return [`<div class="detail" style="display:none">
 <img class="icon" src="detail.svg">
 <span class="detail-description">
 ${publisherDetail}
-${description.replace(' - \u200B', '<hr>')}
+${separator}
+${descriptionDetail}
 </span>
 </div>`];
 			}
