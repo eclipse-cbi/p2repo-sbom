@@ -133,6 +133,9 @@ public class SBOMApplication implements IApplication {
 						effectiveArgs.add(jsonOutputsFolder + "/"
 								+ path.getFileName().toString().replaceAll("\\.(zip|tar|tar.gz)$", "-sbom.json"));
 					}
+					if (args.contains("-verbose")) {
+						System.out.println("Generating for installation: " + path.toString());
+					}
 					sbomGeneratorResults.put(
 							new SBOMGenerator(effectiveArgs).generate(progress.split(1, SubMonitor.SUPPRESS_NONE)),
 							null);
@@ -163,6 +166,9 @@ public class SBOMApplication implements IApplication {
 				if (jsonOutputsFolder != null) {
 					effectiveArgs.add("-json-output");
 					effectiveArgs.add(xmlOutputsFolder + "/" + name + "-sbom.json");
+				}
+				if (args.contains("-verbose")) {
+					System.out.println("Generating for slice: " + slice);
 				}
 				sbomGeneratorResults.put(
 						new SBOMGenerator(effectiveArgs).generate(progress.split(1, SubMonitor.SUPPRESS_NONE)), name);

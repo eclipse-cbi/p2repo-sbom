@@ -1827,16 +1827,17 @@ public class SBOMGenerator extends AbstractApplication {
 		}
 
 		if (mavenDescriptor != null && !mavenDescriptor.isSnapshot()) {
+			var pomURI = mavenDescriptor.toPOMURI();
 			try {
-				var content = contentHandler.getContent(mavenDescriptor.toPOMURI());
+				var content = contentHandler.getContent(pomURI);
 				gatherInformationFromPOM(component, content.getBytes(StandardCharsets.UTF_8), licenseToName);
 			} catch (ContentHandler.ContentHandlerException e) {
 				if (e.statusCode() != 404) {
-					throw new RuntimeException(e);
+					throw new RuntimeException("Exception processing " + pomURI, e);
 				}
 			} catch (NoSuchFileException e) {
-			} catch (IOException e) {
-				throw new RuntimeException(e);
+			} catch (IOException | RuntimeException e) {
+				throw new RuntimeException("Exception processing " + pomURI, e);
 			}
 		}
 
@@ -2167,7 +2168,7 @@ public class SBOMGenerator extends AbstractApplication {
 		} catch (RuntimeException ex) {
 			throw ex;
 		} catch (ParserConfigurationException | SAXException | IOException ex) {
-			throw new RuntimeException(ex);
+			throw new RuntimeException("Problem processing " + component.getBomRef(), ex);
 		}
 	}
 
