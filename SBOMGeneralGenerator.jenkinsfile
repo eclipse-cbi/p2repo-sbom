@@ -62,7 +62,7 @@ sbom.json
 ]
 
 
-def  eclipse437SDKs  = [
+def  eclipse440SDKs  = [
   label: 'Eclipse 4.40 SDKs',
   BUILD_DESCRIPTION: 'Build the SBOMs for all the Eclipse 4.40 SDKs',
   SCP: "eclipse/downloads/drops4/R-4.40-202606010713/eclipse-SDK-*.zip eclipse/downloads/drops4/R-4.40-202606010713/eclipse-SDK-*.tar.gz",
