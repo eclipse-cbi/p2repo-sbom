@@ -43,35 +43,15 @@ local-target
 """),
 ]
 
-def  eclipse436SDKs  = [
-  label: 'Eclipse 4.36 SDKs',
-  BUILD_DESCRIPTION: 'Build the SBOMs for all the Eclipse 4.36 SDKs',
-  SCP: "eclipse/downloads/drops4/R-4.36-202505281830/eclipse-SDK-*.zip eclipse/downloads/drops4/R-4.36-202505281830/eclipse-SDK-*.tar.gz",
-  ARGS: pretty("""
--central-search
--process-bundle-classpath
--redirections
-local-target->https://download.eclipse.org/eclipse/downloads/drops4/R-4.36-202505281830/
--installations
-local-target
--xml-outputs
-.
--json-outputs
-.
-"""),
-  VMARGS: pretty("""
-"""),
-]
-
-def  eclipse437SDK  = [
-  label: 'Eclipse 4.37 SDK Repository',
-  BUILD_DESCRIPTION: 'Build the SBOM for all the Eclipse 4.37 SDK Repository',
+def  eclipse440SDK  = [
+  label: 'Eclipse 4.40 SDK Repository',
+  BUILD_DESCRIPTION: 'Build the SBOM for all the Eclipse 4.40 SDK Repository',
   SCP: "",
   ARGS: pretty("""
 -central-search
 -process-bundle-classpath
 -input
-https://download.eclipse.org/eclipse/updates/4.37/R-4.37-202509050730
+https://download.eclipse.org/eclipse/updates/4.40/R-4.40-202606010713
 -xml-output
 sbom.xml
 -json-output
@@ -83,14 +63,14 @@ sbom.json
 
 
 def  eclipse437SDKs  = [
-  label: 'Eclipse 4.37 SDKs',
-  BUILD_DESCRIPTION: 'Build the SBOMs for all the Eclipse 4.37 SDKs',
-  SCP: "eclipse/downloads/drops4/R-4.37-202509050730/eclipse-SDK-*.zip eclipse/downloads/drops4/R-4.37-202509050730/eclipse-SDK-*.tar.gz",
+  label: 'Eclipse 4.40 SDKs',
+  BUILD_DESCRIPTION: 'Build the SBOMs for all the Eclipse 4.40 SDKs',
+  SCP: "eclipse/downloads/drops4/R-4.40-202606010713/eclipse-SDK-*.zip eclipse/downloads/drops4/R-4.40-202606010713/eclipse-SDK-*.tar.gz",
   ARGS: pretty("""
 -central-search
 -process-bundle-classpath
 -redirections
-local-target->https://download.eclipse.org/eclipse/downloads/drops4/R-4.37-202509050730/
+local-target->https://download.eclipse.org/eclipse/downloads/drops4/R-4.40-202606010713/
 -installations
 local-target
 -xml-outputs
@@ -102,15 +82,15 @@ local-target
 """),
 ]
 
-def  simRel2025_09  = [
-  label: 'SimRel 2025-09 Repository',
-  BUILD_DESCRIPTION: 'Build the SBOMs for the SimRel 2025-09 repository',
+def  simRel2026_06  = [
+  label: 'SimRel 2026-06 Repository',
+  BUILD_DESCRIPTION: 'Build the SBOMs for the SimRel 2026-06 repository',
   SCP: "",
   ARGS: pretty("""
 -central-search
 -process-bundle-classpath
 -input
-https://download.eclipse.org/releases/2025-09
+https://download.eclipse.org/releases/2026-06
 -requirement-exclusions
 org.eclipse.equinox.p2.install.mode.root=true
 osgi.arch=ppc64,osgi.os=linux
@@ -127,15 +107,15 @@ sbom.json
 """),
 ]
 
-def  epp2025_09_R_products  = [
-  label: 'EPP 2025-09 R Products',
-  BUILD_DESCRIPTION: 'Build the SBOMs all for the EPP 2025-09 R Products.',
-  SCP: "technology/epp/downloads/release/2025-09/R/*.zip technology/epp/downloads/release/2025-09/R/*.tar.gz",
+def  epp2026_06_R_products  = [
+  label: 'EPP 2026-06 R Products',
+  BUILD_DESCRIPTION: 'Build the SBOMs all for the EPP 2026-06 R Products.',
+  SCP: "technology/epp/downloads/release/2026-06/R/*.zip technology/epp/downloads/release/2026-06/R/*.tar.gz",
   ARGS: pretty("""
 -central-search
 -process-bundle-classpath
 -redirections
-local-target->https://download.eclipse.org/technology/epp/downloads/release/2025-09/R/
+local-target->https://download.eclipse.org/technology/epp/downloads/release/2026-06/R/
 -installations
 local-target
 -expected-missing-artifact-iu-patterns
@@ -150,14 +130,14 @@ org[.]eclipse[.](help|jdt|pde|pde[.]spies|platform|rcp)[.]source[.]feature[.]gro
 ]
 
 def  simRelStaging  = [
-  label: 'SimRel 2025-12 StagingRepository',
-  BUILD_DESCRIPTION: 'Build the SBOMs for the SimRel 2025-12 Staging Repository',
+  label: 'SimRel 2026-09 StagingRepository',
+  BUILD_DESCRIPTION: 'Build the SBOMs for the SimRel 2026-09 Staging Repository',
   SCP: "",
   ARGS: pretty("""
 -central-search
 -process-bundle-classpath
 -input
-https://download.eclipse.org/staging/2025-12
+https://download.eclipse.org/staging/2026-09
 https://download.eclipse.org/technology/epp/staging/repository
 -requirement-exclusions
 org.eclipse.equinox.p2.install.mode.root=true
@@ -176,8 +156,8 @@ sbom.json
 ]
 
 def  simRelStagingProducts  = [
-  label: 'EPP 2025-12 Staging Products',
-  BUILD_DESCRIPTION: 'Build the SBOMs all for the EPP 2025-12 Staging Products.',
+  label: 'EPP 2026-09 Staging Products',
+  BUILD_DESCRIPTION: 'Build the SBOMs all for the EPP 2026-09 Staging Products.',
   SCP: "technology/epp/staging/*.zip technology/epp/staging/*.tar.gz",
   ARGS: pretty("""
 -central-search
@@ -198,8 +178,8 @@ org[.]eclipse[.](help|jdt|pde|pde[.]spies|platform|rcp)[.]source[.]feature[.]gro
 ]
 
 def  simRelStagingProductsWithP2SourceRepository  = [
-  label: 'EPP 2025-12 Staging Products with P2 Sources',
-  BUILD_DESCRIPTION: 'Build the SBOMs all for the EPP 2025-12 Staging Products with P2 Source repository references.',
+  label: 'EPP 2026-09 Staging Products with P2 Sources',
+  BUILD_DESCRIPTION: 'Build the SBOMs all for the EPP 2026-09 Staging Products with P2 Source repository references.',
   SCP: "technology/epp/staging/*.zip technology/epp/staging/*.tar.gz",
   ARGS: pretty("""
 -central-search
@@ -210,7 +190,7 @@ local-target->https://download.eclipse.org/technology/epp/staging/
 local-target
 -strict-p2-source-repositories
 -p2sources
-https://download.eclipse.org/staging/2025-12/
+https://download.eclipse.org/staging/2026-09/
 https://download.eclipse.org/technology/epp/staging/repository/
 https://download.eclipse.org/justj/epp/milestone/latest/
 -expected-missing-artifact-iu-patterns
@@ -289,11 +269,10 @@ sbom.json
 def parambuilds = [
   eclipseMilestoneInstaller,
   eclipseMilestoneInstallers,
-  eclipse436SDKs,
-  eclipse437SDK,
-  eclipse437SDKs,
-  simRel2025_09,
-  epp2025_09_R_products,
+  eclipse440SDK,
+  eclipse440SDKs,
+  simRel2026_06,
+  epp2026_06_R_products,
   simRelStaging,
   simRelStagingProducts,
   simRelStagingProductsWithP2SourceRepository,
@@ -363,7 +342,7 @@ pipeline {
       defaultValue: defaultBuild.SCP,
       description: (
         '''
-        The download.eclipse.org relative path arguments for scp -r ${SCP} local-target/ where weach argument will be appropriate prefixed.
+        The download.eclipse.org relative path arguments for scp -r ${SCP} local-target/ where each argument will be appropriately prefixed.
         '''
       )
     )
