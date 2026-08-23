@@ -2426,7 +2426,7 @@ public class SBOMGenerator extends AbstractApplication {
 	private void generateXML(Bom bom) {
 		if (xml || xmlOutput != null) {
 			try {
-				var xmlGenerator = createBomXMLGenerator(Version.VERSION_16, bom);
+				var xmlGenerator = createBomXMLGenerator(Version.VERSION_17, bom);
 				var xmlString = xmlGenerator.toXmlString();
 				if (xml) {
 					System.out.println(xmlString);
@@ -2567,7 +2567,7 @@ public class SBOMGenerator extends AbstractApplication {
 						}
 					}
 				}
-				var jsonGenerator = BomGeneratorFactory.createJson(Version.VERSION_16, bom);
+				var jsonGenerator = BomGeneratorFactory.createJson(Version.VERSION_17, bom);
 				var jsonString = jsonGenerator.toJsonString();
 				if (json) {
 					System.out.println(jsonString);

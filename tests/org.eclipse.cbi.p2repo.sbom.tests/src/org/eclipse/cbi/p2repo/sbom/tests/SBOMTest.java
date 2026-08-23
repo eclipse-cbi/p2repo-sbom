@@ -45,11 +45,11 @@ public class SBOMTest {
 		var bom = new Bom();
 		bom.addComponent(component);
 
-		var xmlGenerator = BOMUtil.createBomXMLGenerator(Version.VERSION_16, bom);
+		var xmlGenerator = BOMUtil.createBomXMLGenerator(Version.VERSION_17, bom);
 		var xmlString = xmlGenerator.toXmlString();
 		System.out.println(xmlString);
 
-		var jsonGenerator = BomGeneratorFactory.createJson(Version.VERSION_16, bom);
+		var jsonGenerator = BomGeneratorFactory.createJson(Version.VERSION_17, bom);
 		var jsonString = jsonGenerator.toJsonString();
 		System.out.println(jsonString);
 	}
