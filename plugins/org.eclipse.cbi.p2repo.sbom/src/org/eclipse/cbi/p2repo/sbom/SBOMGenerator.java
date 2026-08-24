@@ -1828,8 +1828,9 @@ public class SBOMGenerator extends AbstractApplication {
 
 		if (mavenDescriptor != null && !mavenDescriptor.isSnapshot()) {
 			var pomURI = mavenDescriptor.toPOMURI();
+			String content = null;
 			try {
-				var content = contentHandler.getContent(pomURI);
+				content = contentHandler.getContent(pomURI);
 				gatherInformationFromPOM(component, content.getBytes(StandardCharsets.UTF_8), licenseToName);
 			} catch (ContentHandler.ContentHandlerException e) {
 				if (e.statusCode() != 404) {
@@ -1837,6 +1838,9 @@ public class SBOMGenerator extends AbstractApplication {
 				}
 			} catch (NoSuchFileException e) {
 			} catch (IOException | RuntimeException e) {
+				if (verbose && content != null) {
+					System.out.println("Exception processing " + pomURI + "\n" + content + "\n");
+				}
 				throw new RuntimeException("Exception processing " + pomURI, e);
 			}
 		}
