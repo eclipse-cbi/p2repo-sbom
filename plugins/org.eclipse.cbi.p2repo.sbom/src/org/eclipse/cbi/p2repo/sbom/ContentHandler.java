@@ -269,7 +269,9 @@ public class ContentHandler {
 
 		var path = getCachePath(uri);
 		if (Files.isRegularFile(path) && !isCacheExpired(path)) {
-			return reader.read(path);
+			synchronized (this) {
+				return reader.read(path);
+			}
 		}
 
 		var path404 = getCachePath404(uri);
@@ -281,7 +283,9 @@ public class ContentHandler {
 			try {
 				Files.createDirectories(path.getParent());
 				var content = basicGetContent(uri, bodyHandler);
-				writer.write(path, content);
+				synchronized (this) {
+					writer.write(path, content);
+				}
 				return content;
 			} catch (ContentHandlerException e) {
 				var statusCode = e.statusCode();
