@@ -41,7 +41,12 @@ public class SBOMApplication implements IApplication {
 
 	@Override
 	public Object start(IApplicationContext context) throws Exception {
-		new Generator(getArguments(context)).generate(new NullProgressMonitor());
+		try {
+			new Generator(getArguments(context)).generate(new NullProgressMonitor());
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			throw ex;
+		}
 		return EXIT_OK;
 	}
 
@@ -60,10 +65,11 @@ public class SBOMApplication implements IApplication {
 
 		public void generate(IProgressMonitor monitor) throws Exception {
 			var args = new ArrayList<>(originalArguments);
-			var installationsFolder = getArgument("-installations", args, null);
 			var verbose = getArgument("-verbose", args);
 			if (verbose) {
 				args.add(0, "-verbose");
+				System.out.println("Application arguments: "
+						+ args.stream().map(it -> '"' + it + '"').collect(Collectors.joining(" ")));
 			}
 
 			Path temporaryCache = null;
@@ -75,6 +81,7 @@ public class SBOMApplication implements IApplication {
 				args.add(index + 1, temporaryCache.toString());
 			}
 
+			var installationsFolder = getArgument("-installations", args, null);
 			try {
 				if (installationsFolder != null) {
 					generateInstallations(installationsFolder, args, monitor);
