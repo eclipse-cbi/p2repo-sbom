@@ -5,7 +5,6 @@
     <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
       <unit id="com.fasterxml.woodstox.woodstox-core" version="0.0.0"/>
       <unit id="json" version="0.0.0"/>
-      <unit id="org.apache.commons.commons-collections4" version="0.0.0"/>
       <unit id="org.apache.commons.commons-compress" version="0.0.0"/>
       <unit id="org.apache.commons.commons-io" version="0.0.0"/>
       <unit id="org.apache.commons.lang3" version="0.0.0"/>
