@@ -220,9 +220,9 @@ Two common short names are recognized and mapped appropriately:
 - `feature` &rarr; `org.eclipse.update.feature`
 - `bundle` &rarr; `osgi.bundle`
 
-### `-component-exclusions` `<pattern>`
+### `-component-exclusions` `<pattern>`+
 
-Specify a regular-expression pattern to match names of components to be excluded from the SBOM.
+Specify one or more regular expression patterns to match names of components to be excluded from the SBOM.
 For example, specifying `.*\.source` can be used to exclude all source bundles.
 
 ### `-expected-missing-artifact-iu-patterns` `<pattern>`+
@@ -237,6 +237,15 @@ For example, the current [SimRel](https://eclipse.dev/simel) repository contains
 -expected-missing-artifact-iu-patterns
 org\.eclipse\.(help|jdt|pde|pde\.spies|platform|rcp)\.source\.feature\.group:.*
 ```
+
+### `-maven-lookup-exclusions` `<pattern>`+
+
+Specify one or more regular expression patterns to match against Maven coordinates.
+Matching artifacts will be excluded from Maven lookup. 
+The Maven coordinates are of format
+```
+<groupId>:<artifactId>:<version>[:<classifier>]
+``` 
 
 ### `-slice` `<pattern>`+
 
