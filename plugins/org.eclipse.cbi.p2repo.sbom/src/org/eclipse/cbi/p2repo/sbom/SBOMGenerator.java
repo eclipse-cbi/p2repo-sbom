@@ -464,6 +464,8 @@ public class SBOMGenerator extends AbstractApplication {
 
 	private final Pattern componentExclusions;
 
+	private final Pattern mavenLookupExclusions;
+
 	private final Bom bom;
 
 	private IMetadataRepositoryManager metadataRepositoryManager;
@@ -517,6 +519,9 @@ public class SBOMGenerator extends AbstractApplication {
 				default -> it;
 				}).collect(Collectors.joining("|")));
 		componentExclusions = Pattern.compile(String.join("|", getArguments("-component-exclusions", args, List.of())));
+
+		mavenLookupExclusions = Pattern
+				.compile(String.join("|", getArguments("-maven-lookup-exclusions", args, List.of())));
 
 		for (var requirementInclusions : getArguments("-requirement-inclusions", args, List.of())) {
 			inclusiveContextIUs.add(createContextIU(requirementInclusions));
@@ -1624,7 +1629,7 @@ public class SBOMGenerator extends AbstractApplication {
 	private void setPurl(Component component, IInstallableUnit iu, IArtifactDescriptor artifactDescriptor,
 			byte[] bytes) {
 		var mavenDescriptor = MavenDescriptor.create(iu, artifactDescriptor, bytes, queryCentral, contentHandler);
-		if (mavenDescriptor != null && !mavenDescriptor.isSnapshot()) {
+		if (mavenDescriptor != null && !mavenDescriptor.isSnapshot() && !isExcludedFromMavenLookup(mavenDescriptor)) {
 			if (setMavenPurl(component, mavenDescriptor, bytes)) {
 				return;
 			}
@@ -1826,7 +1831,7 @@ public class SBOMGenerator extends AbstractApplication {
 			gatherComponentDetailsFromJar(component, bytes, licenseToName);
 		}
 
-		if (mavenDescriptor != null && !mavenDescriptor.isSnapshot()) {
+		if (mavenDescriptor != null && !mavenDescriptor.isSnapshot() && !isExcludedFromMavenLookup(mavenDescriptor)) {
 			var pomURI = mavenDescriptor.toPOMURI();
 			String content = null;
 			try {
@@ -2330,6 +2335,11 @@ public class SBOMGenerator extends AbstractApplication {
 		return false;
 	}
 
+	private boolean isExcludedFromMavenLookup(MavenDescriptor mavenDescriptor) {
+		var coordinates = mavenDescriptor.asCoordinates();
+		return mavenLookupExclusions.matcher(coordinates).matches();
+	}
+
 	private void resolveDependencies(Dependency dependency, IInstallableUnit iu, boolean processDependencyIUs) {
 		var component = getComponent(iu);
 		var componentBomRef = component.getBomRef();
@@ -2344,8 +2354,7 @@ public class SBOMGenerator extends AbstractApplication {
 			var requiredIUs = query(QueryUtil.createMatchQuery(matches), null).toSet();
 			if (!dependencyIUs.containsAll(requiredIUs)) {
 				// Consider the dependency IUs only if there are no non-dependency IUs that
-				// satisfy
-				// the requirement.
+				// satisfy the requirement.
 				requiredIUs.removeAll(dependencyIUs);
 			}
 

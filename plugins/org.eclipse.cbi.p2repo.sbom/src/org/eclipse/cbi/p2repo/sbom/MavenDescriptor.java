@@ -206,4 +206,8 @@ public final record MavenDescriptor(String groupId, String artifactId, String ve
 		return URI.create(MAVEN_CENTRAL_URI + groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/"
 				+ artifactId + "-" + version + suffix);
 	}
+
+	public String asCoordinates() {
+		return groupId + ":" + artifactId + ":" + version + (classifier == null ? "" : ":" + classifier);
+	}
 }
