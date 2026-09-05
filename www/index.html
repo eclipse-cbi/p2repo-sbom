@@ -979,7 +979,9 @@ ${getLicenseElementDetail(license)}
 			const name = getModelValue(component, 'name');
 			const version = getModelValue(component, 'version');
 			const groupElement = group == null ? '' : ` - <span class="label-group">${group}</span>`;
-			return `<span class="label"><span class="label-name">${name}</span> <span class="label-version">${version}</span>${groupElement}</span>`;
+			const isExternal = getModelValue(component, 'isExternal') == 'true';
+			const externalDecoration = isExternal ? '&nbsp;<img class="icon" src="reference.svg">' : '';
+			return `<span class="label"><span class="label-name">${name}</span> <span class="label-version">${version}</span>${groupElement}${externalDecoration}</span>`;
 		}
 
 		function getComponentIcon(component) {

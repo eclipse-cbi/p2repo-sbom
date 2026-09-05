@@ -26,7 +26,7 @@ SPDX-License-Identifier: EPL-2.0
     <github.repo>eclipse-cbi/p2repo-sbom</github.repo>
     <maven.build.timestamp.format>yyyyMMdd-HHmm</maven.build.timestamp.format>
     <tycho-version>5.0.4</tycho-version>
-    <cbi-plugins.version>1.5.4</cbi-plugins.version>
+    <cbi-plugins.version>1.5.7</cbi-plugins.version>
     <code.ignoredWarnings>-warn:-deprecation,raw,unchecked,discouraged</code.ignoredWarnings>
     <eclipse-repo.url>https://repo.eclipse.org/content/repositories/cbi/</eclipse-repo.url>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

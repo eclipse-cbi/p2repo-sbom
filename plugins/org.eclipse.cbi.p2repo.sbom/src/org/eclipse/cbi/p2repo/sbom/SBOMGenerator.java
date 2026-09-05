@@ -858,6 +858,7 @@ public class SBOMGenerator extends AbstractApplication {
 				analyze(true);
 				for (var iu : usedDependencyIUs) {
 					var component = getComponent(iu);
+					component.setIsExternal(true);
 					bom.addComponent(component);
 					bom.addDependency(getDependencies(iu));
 				}
@@ -1366,7 +1367,6 @@ public class SBOMGenerator extends AbstractApplication {
 
 	private void loadSourceRepositories() {
 		if (!p2ArtifactSourceRepositoryURIs.isEmpty()) {
-
 			var artifactRepositories = Set
 					.of(artifactRepositoryManager.getKnownRepositories(IRepositoryManager.REPOSITORIES_ALL));
 			var metadataRepositories = Set
