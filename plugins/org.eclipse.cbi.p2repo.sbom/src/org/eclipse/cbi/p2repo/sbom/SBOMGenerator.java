@@ -466,6 +466,8 @@ public class SBOMGenerator extends AbstractApplication {
 
 	private final Pattern mavenLookupExclusions;
 
+	private final Version formatVersion;
+
 	private final Bom bom;
 
 	private IMetadataRepositoryManager metadataRepositoryManager;
@@ -502,6 +504,9 @@ public class SBOMGenerator extends AbstractApplication {
 		dependencyTrack = getArgument("-dependency-track", args);
 
 		uriRedirections = parseRedirections(getArguments("-redirections", args, List.of()));
+
+		formatVersion = Version
+				.fromVersionString(getArgument("-format-version", args, Version.VERSION_17.getVersionString()));
 
 		var installation = getArgument("-installation", args, null);
 		if (installation != null) {
@@ -2440,7 +2445,7 @@ public class SBOMGenerator extends AbstractApplication {
 	private void generateXML(Bom bom) {
 		if (xml || xmlOutput != null) {
 			try {
-				var xmlGenerator = createBomXMLGenerator(Version.VERSION_17, bom);
+				var xmlGenerator = createBomXMLGenerator(formatVersion, bom);
 				var xmlString = xmlGenerator.toXmlString();
 				if (xml) {
 					System.out.println(xmlString);
@@ -2581,7 +2586,7 @@ public class SBOMGenerator extends AbstractApplication {
 						}
 					}
 				}
-				var jsonGenerator = BomGeneratorFactory.createJson(Version.VERSION_17, bom);
+				var jsonGenerator = BomGeneratorFactory.createJson(formatVersion, bom);
 				var jsonString = jsonGenerator.toJsonString();
 				if (json) {
 					System.out.println(jsonString);

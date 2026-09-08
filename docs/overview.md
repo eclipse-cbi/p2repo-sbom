@@ -23,8 +23,9 @@ the building blocks of the application must be mapped onto a formal SBOM model.
 The CBI p2 SBOM generator uses 
 [CycloneDX](https://cyclonedx.org/)
 as the formal representation,
-currently the specification version
-[1.6](https://cyclonedx.org/specification/overview/).
+by default the [specification version 1.7](https://cyclonedx.org/specification/overview/),
+though an older specification version can be selected with the
+[`-format-version`](cli-guide.md#-format-version-version) option.
 
 OSGi provides rich metadata for each bundle,
 e.g.,

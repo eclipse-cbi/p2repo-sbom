@@ -289,6 +289,20 @@ it is generally more concise to specify the unsupported ones than to list all th
 Given the purpose of the SBOM generator is to generate an SBOM,
 a command-line invocation will generally specify the type of SBOM and the location of the SBOM.
 
+### `-format-version` `<version>`
+
+Specify the version of the [CycloneDX](https://cyclonedx.org/specification/overview/) specification used to serialize the SBOM.
+The recognized values are `1.0`, `1.1`, `1.2`, `1.3`, `1.4`, `1.5`, `1.6`, and `1.7`.
+
+Default is `1.7`, i.e., the most recent specification version supported by the underlying CycloneDX library.
+
+The specified version applies to both the XML and the JSON serialization.
+Note that the CycloneDX JSON format was introduced with specification version `1.2`,
+so `1.0` and `1.1` can be used only in combination with the XML output options.
+
+Specifying an older version is useful when a consumer of the SBOM does not yet support the most recent specification version.
+Be aware that information that is not representable in the schema of the specified version is omitted from the generated SBOM.
+
 ### `-xml`
 
 Specify to print the CycloneDX SBOM XML to stdout.
