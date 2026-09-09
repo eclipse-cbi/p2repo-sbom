@@ -1380,10 +1380,18 @@ ${`<span style="opacity: ${nextId == null ? 0.25 : 1.0};" class="action" onclick
 			for (const filter of filters) {
 				const id = filter.id;
 				const checked = filter.checked && !filter.disabled;
+				const isExternalityFilter = id == 'external' || id == 'internal';
+				const isComponentTypeFilter = id == 'binary' || id == 'bundle' || id == 'feature' || id == 'metadata';
 				if (id.startsWith('show-')) {
 					if (checked) {
 						show = id;
 					}
+					continue;
+				}
+
+				// External/internal are consumed by the per-element AND in the type-filter loop below.
+				if (isExternalityFilter) {
+					setCount(filter, document.querySelectorAll('.' + id).length);
 					continue;
 				}
 
@@ -1401,12 +1409,19 @@ ${`<span style="opacity: ${nextId == null ? 0.25 : 1.0};" class="action" onclick
 
 				let count = 0;
 				const isPURL = id.startsWith('purl-');
+				// Only type-classifier filters iterate over component divs, which are the elements
+				// that carry the external/internal class. Child filters (license, hash, ...) match
+				// child divs that never carry externality, so they don't need to AND it in.
+				const externalChecked = document.getElementById('external').checked;
+				const internalChecked = document.getElementById('internal').checked;
 				const elements = isPURL ? document.querySelectorAll(`a[data-repository-url="${ids.get(id.replace(/^purl-/, ''))}"]`) : document.querySelectorAll('.' + id);
 				for (const element of elements) {
 					const effectiveElement = element.localName == 'a' ? element.parentElement : element;
-					setFiltered(effectiveElement, !checked);
+					const effectiveChecked = checked && (!isComponentTypeFilter
+						|| (effectiveElement.classList.contains('external') ? externalChecked : internalChecked));
+					setFiltered(effectiveElement, !effectiveChecked);
 					if (isShowing(effectiveElement)) {
-						effectiveElement.style.display = checked ? 'block' : 'none';
+						effectiveElement.style.display = effectiveChecked ? 'block' : 'none';
 					}
 					const artifactDiv = effectiveElement.parentElement?.parentElement?.parentElement;
 					if (artifactDiv != null && !isFiltered(artifactDiv)) {
@@ -1650,7 +1665,8 @@ ${`<span style="opacity: ${nextId == null ? 0.25 : 1.0};" class="action" onclick
 				const incomingDependencyElements = getDependencyElements(incomingDependencyMap, component, 'incoming-dependency');
 				const outgoingDependencyElements = getDependencyElements(outgoingDependencyMap, component, 'outgoing-dependency');
 
-				return `<div style="white-space: nowrap;" id=${getModelValue(component, 'bom-ref')} class="${getComponentClassifier(component)}" data-showing="true">
+				const isExternal = getModelValue(component, 'isExternal') == 'true';
+				return `<div style="white-space: nowrap;" id=${getModelValue(component, 'bom-ref')} class="${getComponentClassifier(component)} ${isExternal ? 'external' : 'internal'}" data-showing="true">
 ${generateButton()}<span class="label">&nbsp;${getComponentIcon(component)} ${getComponentLabel(component)}${getComponentDependencyTrackLink(component)}<span>
 ${purlElements.join('\n')}
 ${pedigreeElements.join('\n')}
@@ -1873,6 +1889,18 @@ ${componentElements.join('\n')}
 				<br>
 
 				<div>
+					<input class="filter" type="checkbox" id="internal" name="internal" onclick="filterClick(event, this)" checked>
+					<label for="internal">Internal<span class="count"></span></label>
+
+					<input class="filter" type="checkbox" id="external" name="external" onclick="filterClick(event, this)" checked>
+					<label for="external"><img alt="" src="reference.svg"> External<span class="count"></span></label>
+
+					<img onclick="popup('help-external-component')" alt="help" src="help.svg">
+				</div>
+
+				<br>
+
+				<div>
 					<img alt="" src="filter.svg"> <input type="search" placeholder="/.*/" id="search" name="name" size="50">
 					<span id="search-error"></span>
 					<img onclick="popup('help-name')" alt="help" src="help.svg">
@@ -2043,6 +2071,25 @@ ${componentElements.join('\n')}
 						Double clicking an item in this section of filters will make it the only check-marked filter
 						except if it's already the only check-marked filter,
 						in which case all filters will be check-marked.
+					</p>
+				</div>
+			</div>
+
+			<div id="help-external-component" class="modal-popup-description">
+				<div>
+					<h3>Internal / External</h3>
+					<p>
+						CycloneDX 1.7 introduces an <a href="https://cyclonedx.org/docs/1.7/json/#components_items_isExternal">isExternal</a> flag on components.
+						A component with <code>isExternal: true</code> represents an artifact that is not built as part of this project
+						but is consumed from an external source.
+						Components without this flag are considered internal to the project.
+					</p>
+					<p>
+						External components are visually marked with a <img class="icon" src="reference.svg"> icon next to the component label.
+						Use these filters to show only internal components, only external components, or both.
+					</p>
+					<hr>
+					<p data-copy="enable-all-disable-all-row">
 					</p>
 				</div>
 			</div>
