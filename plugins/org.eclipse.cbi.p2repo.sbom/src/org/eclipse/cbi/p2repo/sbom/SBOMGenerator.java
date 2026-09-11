@@ -12,6 +12,7 @@ import static org.eclipse.cbi.p2repo.sbom.IOUtil.getZipContents;
 import static org.eclipse.cbi.p2repo.sbom.URIUtil.parseRedirections;
 import static org.eclipse.cbi.p2repo.sbom.URIUtil.toURI;
 import static org.eclipse.cbi.p2repo.sbom.XMLUtil.evaluate;
+import static org.eclipse.cbi.p2repo.sbom.XMLUtil.getDirectChildText;
 import static org.eclipse.cbi.p2repo.sbom.XMLUtil.getText;
 import static org.eclipse.cbi.p2repo.sbom.XMLUtil.newDocumentBuilder;
 
@@ -2190,8 +2191,8 @@ public class SBOMGenerator extends AbstractApplication {
 		var licenses = evaluate(document, "//pom:license|//license");
 		if (!licenses.isEmpty()) {
 			for (var element : licenses) {
-				var name = getText(element, "name");
-				var url = getText(element, "url");
+				var name = getDirectChildText(element, "name");
+				var url = getDirectChildText(element, "url");
 				if (url == null) {
 					if (name == null) {
 						continue;
@@ -2219,11 +2220,11 @@ public class SBOMGenerator extends AbstractApplication {
 
 		var scms = evaluate(document, "//pom:scm|//scm");
 		for (var element : scms) {
-			var connection = getText(element, "connection");
+			var connection = getDirectChildText(element, "connection");
 			if (connection == null) {
-				connection = getText(element, "developerConnection");
+				connection = getDirectChildText(element, "developerConnection");
 				if (connection == null) {
-					connection = getText(element, "url");
+					connection = getDirectChildText(element, "url");
 				}
 			}
 			if (connection != null) {
@@ -2233,7 +2234,7 @@ public class SBOMGenerator extends AbstractApplication {
 
 		var issues = evaluate(document, "//pom:issueManagement|//issueManagement");
 		for (var element : issues) {
-			var url = getText(element, "url");
+			var url = getDirectChildText(element, "url");
 			if (url != null) {
 				addExternalReference(component, ExternalReference.Type.ISSUE_TRACKER, url);
 			}
@@ -2241,7 +2242,7 @@ public class SBOMGenerator extends AbstractApplication {
 
 		var websites = evaluate(document, "//pom:project|//project");
 		for (var element : websites) {
-			var url = getText(element, "url");
+			var url = getDirectChildText(element, "url");
 			if (url != null && url.startsWith("http")) {
 				addExternalReference(component, ExternalReference.Type.WEBSITE, url);
 			}
@@ -2249,9 +2250,9 @@ public class SBOMGenerator extends AbstractApplication {
 
 		var mailingLists = evaluate(document, "//pom:mailingList|//mailingList");
 		for (var element : mailingLists) {
-			var url = getText(element, "archive");
+			var url = getDirectChildText(element, "archive");
 			if (url == null) {
-				url = getText(element, "post");
+				url = getDirectChildText(element, "post");
 			}
 			if (url != null) {
 				addExternalReference(component, ExternalReference.Type.MAILING_LIST, url);
@@ -2263,7 +2264,7 @@ public class SBOMGenerator extends AbstractApplication {
 		var distributions = evaluate(document, "//pom:repository|//repository");
 		for (var element : distributions) {
 			if (element.getParentNode().getLocalName().equals("distributionManagement")) {
-				var url = getText(element, "url");
+				var url = getDirectChildText(element, "url");
 				if (url != null) {
 					addExternalReference(component, ExternalReference.Type.DISTRIBUTION, url);
 				} else {
