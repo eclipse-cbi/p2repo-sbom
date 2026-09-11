@@ -52,6 +52,24 @@ public final class XMLUtil {
 		return null;
 	}
 
+	/**
+	 * Returns the text content of the first direct child element with the given
+	 * local name, or {@code null} if none exists. Unlike {@link #getText}, this
+	 * does not recurse into nested descendants - critical when extracting POM
+	 * fields where a nested {@code <url>} inside a plugin {@code <configuration>}
+	 * would otherwise shadow a missing top-level {@code <project>/<url>}.
+	 */
+	public static String getDirectChildText(Element element, String name) {
+		var children = element.getChildNodes();
+		for (int i = 0, length = children.getLength(); i < length; i++) {
+			var node = children.item(i);
+			if (node.getNodeType() == Node.ELEMENT_NODE && name.equals(node.getLocalName())) {
+				return node.getTextContent();
+			}
+		}
+		return null;
+	}
+
 	public static List<Element> evaluate(Node node, String expression) {
 		var xPath = XPATH_FACTORY.newXPath();
 		try {
