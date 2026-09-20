@@ -19,6 +19,7 @@ import static org.eclipse.cbi.p2repo.sbom.XMLUtil.newDocumentBuilder;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemNotFoundException;
@@ -206,6 +207,14 @@ public class SBOMGenerator extends AbstractApplication {
 
 	private static final Pattern GPL_21_PATTERN = Pattern
 			.compile("\\s*GNU LESSER GENERAL PUBLIC LICENSE\\s+Version 2\\.1, February 1999");
+
+	private static final Pattern GPL_20_ONLY_PATTERN = Pattern.compile(
+			"\\s*(GNU GENERAL PUBLIC LICENSE|The GNU General Public License \\(GPL\\))\\s+Version 2, June 1991",
+			Pattern.CASE_INSENSITIVE);
+
+	private static final Pattern CLASSPATH_EXCEPTION_20_PATTERN = Pattern.compile(
+			"As a special exception, the copyright holders of this library give you permission to link this library with independent modules"
+					.replace(" ", "\\s+"));
 
 	private static final Pattern SPDX_ID_PATTERN = Pattern
 			.compile("SPDX-License-Identifier:\\s((with\r?\n|[^\r\n\"\\\\|#])+)");
@@ -1566,6 +1575,11 @@ public class SBOMGenerator extends AbstractApplication {
 			addExternalReference(component, ExternalReference.Type.WEBSITE, descriptionURL);
 		}
 
+		var justjModel = iu.getProperty("org.eclipse.justj.model");
+		if (justjModel != null) {
+			addJustJModel(component, justjModel);
+		}
+
 		for (var property : iu.getProperties().entrySet()) {
 			var key = property.getKey();
 			var value = property.getValue();
@@ -1667,6 +1681,24 @@ public class SBOMGenerator extends AbstractApplication {
 		var purl = "pkg:p2/" + artifactKey.getId() + "@" + artifactKey.getVersion() + "?classifier="
 				+ artifactKey.getClassifier() + "&repository_url=" + encodedLocation;
 		component.setPurl(purl);
+	}
+
+	private void addJustJModel(Component component, String justjModel) {
+		try {
+			var builder = newDocumentBuilder();
+			var document = builder.parse(new InputSource(new StringReader(justjModel)));
+			var details = evaluate(document, "//model:Variant/annotation/detail");
+			for (var detail : details) {
+				var key = detail.getAttribute("key");
+				if ("org.eclipse.justj.url.source".equals(key)) {
+					var value = getText(detail, "value");
+					addExternalReference(component, ExternalReference.Type.DISTRIBUTION, value);
+					break;
+				}
+			}
+		} catch (ParserConfigurationException | SAXException | IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private boolean setMavenPurl(Component component, MavenDescriptor mavenDescriptor, byte[] bytes) {
@@ -2059,46 +2091,57 @@ public class SBOMGenerator extends AbstractApplication {
 		var content = new String(bytes, StandardCharsets.UTF_8);
 		if (APACHE_PUBLIC_LICENSE_20_PATTERN.matcher(content).find()) {
 			addSPDXLicense(licenseToName, "Apache-2.0");
-		} else if (GPL_21_PATTERN.matcher(content).find()) {
+		}
+		if (GPL_21_PATTERN.matcher(content).find()) {
 			addSPDXLicense(licenseToName, "LGPL-2.1-only");
-		} else if (content.contains("The Apache Software License, Version 1.1")) {
+		}
+		if (GPL_20_ONLY_PATTERN.matcher(content).find()) {
+			if (CLASSPATH_EXCEPTION_20_PATTERN.matcher(content).find()) {
+				addSPDXLicense(licenseToName, "GPL-2.0-only");
+				addSPDXLicense(licenseToName, "Classpath-exception-2.0");
+			} else {
+				addSPDXLicense(licenseToName, "GPL-2.0-only");
+			}
+		}
+		if (content.contains("The Apache Software License, Version 1.1")) {
 			addSPDXLicense(licenseToName, "Apache-1.1");
-		} else if (content.startsWith("BSD License")) {
+		}
+		if (content.startsWith("BSD License")) {
 			addSPDXLicense(licenseToName, "0BSD");
-		} else if (content.startsWith("# Eclipse Public License - v 2.0")
+		}
+		if (content.startsWith("# Eclipse Public License - v 2.0")
 				|| content.startsWith("Eclipse Public License - v 2.0")) {
 			addSPDXLicense(licenseToName, "EPL-2.0");
-		} else if (content.contains("IBM Public License Version 1.0")) {
+		}
+		if (content.contains("IBM Public License Version 1.0")) {
 			addSPDXLicense(licenseToName, "IPL-1.0");
-		} else {
-			// SPDX-License-Identifier: BSD-3-Clause
-			var matcher = SPDX_ID_PATTERN.matcher(content);
-			if (matcher.find()) {
-				do {
-					var spdxId = matcher.group(1).trim();
-					var license = spdxIndex.getLicense(spdxId);
-					if (license != null) {
-						addLicense(licenseToName, license, spdxId);
-					} else {
-						var parts = spdxId.replaceAll("[()]", "")
-								.split("\\s+OR\\s+|\\s+AND\\s+|\\s+WITH\\s+|\\s+with\\s+");
-						if (parts.length > 1) {
-							for (var part : parts) {
-								license = spdxIndex.getLicense(part);
-								if (license != null) {
-									addLicense(licenseToName, license, spdxId);
-								} else {
-									System.err.println("license-part='" + part + "'");
-								}
+		}
+		// SPDX-License-Identifier: BSD-3-Clause
+		var matcher = SPDX_ID_PATTERN.matcher(content);
+		if (matcher.find()) {
+			do {
+				var spdxId = matcher.group(1).trim();
+				var license = spdxIndex.getLicense(spdxId);
+				if (license != null) {
+					addLicense(licenseToName, license, spdxId);
+				} else {
+					var parts = spdxId.replaceAll("[()]", "").split("\\s+OR\\s+|\\s+AND\\s+|\\s+WITH\\s+|\\s+with\\s+");
+					if (parts.length > 1) {
+						for (var part : parts) {
+							license = spdxIndex.getLicense(part);
+							if (license != null) {
+								addLicense(licenseToName, license, spdxId);
+							} else {
+								System.err.println("license-part='" + part + "'");
 							}
-						} else {
-							System.err.println("license-part='" + spdxId + "'");
 						}
+					} else {
+						System.err.println("license-part='" + spdxId + "'");
 					}
-				} while (matcher.find());
-			} else {
-				// System.err.println("###");
-			}
+				}
+			} while (matcher.find());
+		} else {
+			// System.err.println("###");
 		}
 	}
 
