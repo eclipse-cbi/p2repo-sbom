@@ -8,7 +8,6 @@
     <stringAttribute key="M2_PROFILES" value="promote"/>
     <listAttribute key="M2_PROPERTIES">
         <listEntry value="user.home=${system_property:user.home}"/>
-        <listEntry value="java.home=${maven.build.java.home}"/>
         <listEntry value="build.type=nightly"/>
         <listEntry value="org.eclipse.justj.p2.manager.args=-remote localhost:${project_loc:/org.eclipse.cbi.p2repo.sbom.releng.parent}/repository"/>
         <listEntry value="git.commit=87862e568daa143637c6e36d1374560e8a6aaafa"/>
