@@ -353,7 +353,7 @@
         </detail>
         <detail
             key="extraUnits">
-          <value>org.eclipse.equinox.executable.feature.group</value>
+          <value>org.eclipse.equinox.executable.feature.group,slf4j.simple</value>
         </detail>
         <detail
             key="singleLocation">

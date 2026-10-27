@@ -33,6 +33,7 @@
 
    <requires>
       <import plugin="org.apache.felix.scr"/>
+      <import plugin="slf4j.simple"/>
    </requires>
 
 </feature>
