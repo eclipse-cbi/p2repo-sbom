@@ -48,10 +48,6 @@
          version="0.0.0"/>
 
    <plugin
-         id="com.github.package-url.packageurl-java"
-         version="0.0.0"/>
-
-   <plugin
          id="com.networknt.json-schema-validator"
          version="0.0.0"/>
 
